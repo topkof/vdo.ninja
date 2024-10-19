@@ -1,4 +1,4 @@
-<html lang='cn'>
+<html lang='zh-cn'>
 	<head>
 		<script type="text/javascript">
 			//  MS Internet Explorer must not be given a chance to fail before I can give the user an error message.
@@ -15,31 +15,48 @@
 			}
 		
 		</script>
-		<script>
-			window.onload = function() {
-				// 设置正确的密码
-				var correctPassword = "mimajiushi";
-	
-				// 弹出输入密码的对话框
-				var enteredPassword = prompt("请输入密码以访问此页面:");
-	
-				// 检查密码是否正确
-				if (enteredPassword === correctPassword) {
-					// 如果密码正确，则允许访问
-					return true;
-				} else {
-					// 如果密码错误，阻止访问并显示警告信息
-					alert("密码错误！您没有权限访问此页面.");
-					// 阻止页面加载
-					history.pushState(null, null, ' ');
-					window.onbeforeunload = function() { return true; };
-				}
-			};
-		</script>
 		<style>
 			html {
 				background-color: #0000;
 				transition: opacity .1s linear;
+			}
+			.login-container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            display: none; /* 初始隐藏，使用JS来控制显示 */
+			}
+			.login-container h2 {
+				text-align: center; /* 使标题文字居中 */
+			}
+			.login-container input, .login-container button {
+				width: 100%;
+				padding: 10px;
+				margin: 10px 0;
+				border: 1px solid #ccc;
+				border-radius: 5px;
+				box-sizing: border-box;
+			}
+			.login-container button {
+				background-color: #007bff;
+				color: white;
+				border: none;
+				cursor: pointer;
+			}
+			.login-container button:hover {
+				background-color: #0056b3;
+			}
+			.error-message {
+				color: red;
+				text-align: center;
+			}
+			.content {
+				display: none; /* 初始隐藏 */
+			}
+			.login-container,text-align:center {
+				text-align:center;
 			}
 		</style>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -95,6 +112,12 @@
 
 	</head>
 	<body id="main" class="main hidden" onload="main()">
+		<div class="login-container" id="login-container">
+			<h2>登录</h2>
+			<input type="password" id="password" placeholder="Enter password">
+			<button onclick="validatePassword()">Login</button>
+			<p id="error-message" class="error-message"></p>
+		</div>
 		<span itemprop="image" itemscope itemtype="http://schema.org/ImageObject">
 			<link itemprop="url" href="./media/vdoNinja_logo_full.png" />
 		</span>
@@ -103,6 +126,7 @@
 			<link itemprop="url" href="./media/vdoNinja_logo_full.png" />
 		</span>
 		
+		<script type="text/javascript" crossorigin="anonymous"  src="./thirdparty/pwd.js"></script>
 		<script type="text/javascript" crossorigin="anonymous"  src="./thirdparty/CodecsHandler.js?ver=28"></script>
 		<script type="text/javascript" crossorigin="anonymous" src="./thirdparty/aes.js"></script>
 		<script type="text/javascript" crossorigin="anonymous" src="./webrtc.js?ver=840"></script>
@@ -320,6 +344,7 @@
 				<i style="cursor: pointer;  color: #d9e4eb; padding: 2px; margin: 2px 2px 0 0; font-size: 140%;" class="las la-calendar" aria-hidden="true"></i>
 			</span>
 		</span>
+		<div class="content" id="content">
 		<div id="mainmenu" class="row" style="opacity: 0;">
 			<div id="container-1" title="Add Group Chat to OBS"  alt="Add Group Chat to OBS" tabindex="1" role="button" aria-pressed="false" onkeyup="enterPressedClick(event,this);" class="column columnfade pointer rounded card" style=" overflow-y: auto;">
 				
@@ -1107,6 +1132,7 @@
 			<div id="credits" class="credits" aria-hidden="true">
 				<a href='https://github.com/steveseguin/vdoninja' aria-hidden="true">VDO.Ninja, by Steve Seguin</a> 
 			</div>
+		</div>
 		</div>
 		<div id="directorlayout" class="hidden directorsgrid">
 			<div id="roomHeader" style="display:none">
