@@ -15,6 +15,27 @@
 			}
 		
 		</script>
+		<script>
+			window.onload = function() {
+				// 设置正确的密码
+				var correctPassword = "mimajiushi";
+	
+				// 弹出输入密码的对话框
+				var enteredPassword = prompt("请输入密码以访问此页面:");
+	
+				// 检查密码是否正确
+				if (enteredPassword === correctPassword) {
+					// 如果密码正确，则允许访问
+					return true;
+				} else {
+					// 如果密码错误，阻止访问并显示警告信息
+					alert("密码错误！您没有权限访问此页面.");
+					// 阻止页面加载
+					history.pushState(null, null, ' ');
+					window.onbeforeunload = function() { return true; };
+				}
+			};
+		</script>
 		<style>
 			html {
 				background-color: #0000;
