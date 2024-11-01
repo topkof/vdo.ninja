@@ -155,7 +155,12 @@ async function main() {
 	
 	if (urlParams.has("feedbackbutton") || urlParams.has("fb")) {
 		getById("unmuteSelf").classList.remove("hidden"); // lets the director see the avatar option
-		session.selfVolume = urlParams.get("fb") || null;
+		//session.selfVolume = urlParams.get("fb") || null;
+		session.selfVolume = urlParams.get("feedbackbutton") || urlParams.get("fb") || null;
+		if (session.selfVolume){
+			getById("unmuteSelf").setAttribute("title", `Hear yourself at ${parseFloat(session.selfVolume)}% volume`);
+			getById("unmuteSelf").setAttribute("alt", `Hear yourself at ${parseFloat(session.selfVolume)}% volume`);
+		}
 	}
 
 	if (urlParams.has("controls") || urlParams.has("videocontrols")) {
