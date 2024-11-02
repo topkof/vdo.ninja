@@ -2525,6 +2525,9 @@
 		
 		var iframesrc = "./index.html?ltb=1500&nocontrolbarspace&transparent&hideheader&hidetranslate&cleandirector&chatbutton=0&director="+roomname+additional+additional2+"&b64css="+injectCSS;
 		
+		if (urlParams.has('ltb')){
+			iframesrc = iframesrc.replace("ltb=1500&","");
+		}
 		var params = window.location.search || "";
 		
 		if (params.startsWith("?")){

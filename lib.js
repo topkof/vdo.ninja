@@ -84,9 +84,10 @@ var miscTranslations = {
 	"password-incorrect": "The password was incorrect.\n\nRefresh and try again.",
 	"enter-display-name": "Please enter your display name:",
 	"enter-new-display-name": "Enter a new Display Name for this stream",
-	"what-bitrate": "What bitrate would you like to record at? (kbps)\n\n - This remote guest will save the recording directly to their local disk.\n\n - The recording can fail, so have backup recordings going.\n\n - This record option does not use Internet bandwidth and offers a high quality recording",
+	"what-bitrate": "This remote guest will save the recording directly to their local disk.\n\n - The recording can fail, so have backup recordings going!\n\n - This record option does not use Internet bandwidth and offers a high quality recording\n\n - Guests using iPhones, Androids, or Safari will often have issues - bewarned.",
+	"what-bitrate-gdrive": "This remote guest will save the recording directly to their local disk, as well as send a copy to your Google Drive (recordings folder).\n\n - The recording can fail however, so have backup recordings going!\n\n - Guests using iPhones, Androids, or Safari will often have issues - bewarned.",
 	"enter-website": "Enter a website URL to share",
-	"press-ok-to-record": "You can specify the recording bitrate below (kbps)\n\n - Press OK to start recording. Press again to stop and download.\n\n - Keep this browser tab active to continue recording.\n\n - This recording option will record to your local disk.\n\n - Quality may depend on the Internet connection between you and the guest.\n\n - Recordings may possibly fail; have a backup option.",
+	"press-ok-to-record": " - Keep this browser tab active when recording.\n\n - This recording option will record to your local download folder.\n\n - Quality may depend on the Internet connection between you and the guest.\n\n - Recordings may possibly fail; have a backup option!",
 	"no-streamID-provided": "No streamID was provided; one will be generated randomily.\n\nStream ID: ",
 	"alphanumeric-only": "Info: Only AlphaNumeric characters should be used for the stream ID.\n\nThe offending characters have been replaced by an underscore",
 	"stream-id-too-long": "The Stream ID should be less than 64 alPhaNuMeric characters long.\n\nWe will trim it to length.",
@@ -132,7 +133,7 @@ var miscTranslations = {
 	"camera-tip-camlink": "<i>Tip:</i> A Cam Link may glitch green/purple if accessed elsewhere while already in use.",
 	"samsung-a-series": "Samsung A-series phones may have issues with Chrome; if so, try Firefox Mobile instead or switch video codecs.",
 	"screen-permissions-denied": "Permission to capture denied. Ensure your browser has screen record system permissions\n\n1.On your Mac, choose Apple menu  > System Preferences, click Security & Privacy , then click Privacy.\n2.Select Screen Recording.\n3.Select the checkbox next to your browser to allow it to record your screen.",
-	"change-audio-output-device": "Audio could not be captured. Please make sure you have an audio output device available.\n\nSome gaming headsets (ie: Logitech/Corsair) may need to be set to 2-channel output to work, as <a target='_blank' href='https://docs.vdo.ninja/common-errors-and-known-issues/surround-sound-error-when-screen-sharing-with-usb-headset'>surround sound drivers may cause problems</a>.\n\nPlease double check your audio settings if using a gaming headset to ensure spatial/DTS/surround audio is not in use. Disabling 'Audio enhancements' in Windows audio settings may also help resolve issues.\n\nIf issues persist, physically unplugging the existing audio device and using another may help as well.\n\nProfessional devices and audiophile-grade audio devices may also cause problems; multi-channel, DSD, 32-bit bit depth, and very high sample rates may cause issues.",
+	"change-audio-output-device": "Audio could not be captured.\n\nIf you need audio, please make sure you have an audio output device available.\n\nSome gaming headsets (ie: Logitech/Corsair) also may need to be set to 2-channel output to work, as <a target='_blank' href='https://docs.vdo.ninja/common-errors-and-known-issues/surround-sound-error-when-screen-sharing-with-usb-headset'>surround sound drivers may cause problems</a>",
 	"prompt-access-request": " is trying to view your stream. Allow them?",
 	"confirm-reload-user": "Are you sure you wish to reload this user's browser?",
 	"webrtc-is-blocked": "⚠ This browser has either blocked WebRTC or does not support it.\n\nThis site will not work without it.\n\nDisable any browser extensions or privacy settings that may be blocking WebRTC, or try a different browser.",
@@ -899,6 +900,437 @@ async function delay(ms) {
 
 var Prompts = {};
 async function promptAlt(inputText, block = false, asterix = false, value = false, time = false, recording = false, hotkey = false) {
+	var result = null;
+	if (session.beepToNotify) {
+		playtone();
+	}
+	await new Promise((resolve, reject) => {
+		var promptID = "pid_" + Math.random().toString(36).substr(2, 9);
+		Prompts[promptID] = {};
+		Prompts[promptID].resolve = resolve;
+		Prompts[promptID].reject = reject;
+
+		var zindex = 32 + document.querySelectorAll(".promptModal").length + document.querySelectorAll(".alertModal").length;
+
+		if (block) {
+			var backdropClass = "opaqueBackdrop";
+		} else {
+			var backdropClass = "modalBackdrop";
+		}
+
+		inputText = "<span style='font-size:1.2em'>" + inputText.replace("\n", "</span><br /><span>") + "</span>";
+		inputText = inputText.replace(/\n/g, "<br />");
+		var type = "text";
+		if (asterix) {
+			type = "password";
+		}
+
+		if (time) {
+			modalTemplate = `<div id="modal_${promptID}" class="promptModal" style="z-index:${zindex + 2}">	
+					<div class="promptModalInner">
+						<span id="close_${promptID}" class='modalClose' data-pid="${promptID}">×</span>
+						<span class='promptModalMessage' style='margin:20px'>${inputText}</span>
+						<span style="margin:20px";>
+							<input id="input_${promptID}" title="minutes" autocorrect="off" autocapitalize="none" data-pid="${promptID}" value="0" style="width:50px;padding:4px;margin:4px;" min="0" type="number" /> minutes, 
+							<input id="input_${promptID}_sec"  title="seconds" autocorrect="off" autocapitalize="none" data-pid="${promptID}" value="0"  style="width:50px;padding:4px;margin:4px;" max="59" min="0" type="number" /> seconds
+							<br /><br />
+							<input type='checkbox' id="countup_${promptID}" style="margin-left:30px" title="Count up from 0 instead" data-pid="${promptID}" /> Count up from zero instead
+						</span>
+						<br /><br />
+						<button id="submit_${promptID}" data-pid="${promptID}" style="width:120px; background-color: #fff; position: relative;border: 1px solid #999; margin: 0 0 0 30px" data-translate='ok'>✔ OK</button>
+						<button id="cancel_${promptID}" data-pid="${promptID}" style="width:120px; background-color: #fff; position: relative;border: 1px solid #999; margin: 0;" data-translate='cancel'>❌ Cancel</button>
+						<br /><br />
+					</div>
+				</div>
+				<div id="modalBackdrop_${promptID}" class="${backdropClass}" style="z-index:${zindex + 1}"></div>`;
+		} else if (recording) {
+			modalTemplate = `<div id="modal_${promptID}" class="promptModal" style="z-index:${zindex + 2}">	
+					<div class="promptModalInner">
+						<span id="close_${promptID}" class='modalClose' data-pid="${promptID}">×</span>
+						<span class='promptModalMessage'>${inputText}</span>
+						<span style="margin:20px";>
+							<input id="input_${promptID}" autocorrect="off" autocapitalize="none" data-pid="${promptID}"  type="${type}" class="largeTextEntry" />
+							<input id="input_${promptID}_gdrive" title="Upload to Google Drive also"  data-pid="${promptID}" type="checkbox" /> Upload to your Google Drive
+							<input id="input_${promptID}_dbx" title="Upload to Dropbox also"  data-pid="${promptID}" type="checkbox" /> Upload to your Drop Box
+						</span>
+						<br /><br />
+						<button id="submit_${promptID}" data-pid="${promptID}" style="width:120px; background-color: #fff; position: relative;border: 1px solid #999; margin: 0 0 0 55px;" data-translate='ok'>✔ OK</button>
+						<button id="cancel_${promptID}" data-pid="${promptID}" style="width:120px; background-color: #fff; position: relative;border: 1px solid #999; margin: 0;" data-translate='cancel'>❌ Cancel</button>
+					</div>
+				</div>
+				<div id="modalBackdrop_${promptID}" class="${backdropClass}" style="z-index:${zindex + 1}"></div>`;
+		} else if (hotkey) {
+			modalTemplate = `<div id="modal_${promptID}" class="promptModal" style="z-index:${zindex + 2}">	
+					<div class="promptModalInner">
+						<span id="close_${promptID}" class='modalClose' data-pid="${promptID}">×</span>
+						<span class='promptModalMessage'>${inputText}</span>
+						<br />
+						<span style="margin:20px";>
+							<label title="Choose a hotkey for Hold-to-Talk.">Press-to-Talk Hot-key</label>
+							<input type="text" id="input_${promptID}"  placeholder="press a key here" style="padding-left: 7px;" onkeypress="event.preventDefault;event.stopPropagation();return false;" onkeyup="event.preventDefault;event.stopPropagation();return false;" onkeydown="setHotKey();"/>
+							<button onclick="setHotKey(false);" style="margin: 0 0 0 4px; border-radius: 5px; padding: 3px 3px;">Clear</button>
+							<button id="submit_${promptID}" data-pid="${promptID}" style="min-width:70px; color:black; background-color: #fff; position: relative;border: 1px solid #999; margin: 0 0 0 10px;" data-translate='ok'>Close</button>
+						</span>
+						<br />
+						<br />
+					</div>
+				</div>
+				<div id="modalBackdrop_${promptID}" class="${backdropClass}" style="z-index:${zindex + 1}"></div>`;
+		} else {
+			modalTemplate = `<div id="modal_${promptID}" class="promptModal" style="z-index:${zindex + 2}">	
+					<div class="promptModalInner">
+						<span id="close_${promptID}" class='modalClose' data-pid="${promptID}">×</span>
+						<span class='promptModalMessage'>${inputText}</span>
+						<input id="input_${promptID}" autocorrect="off" autocapitalize="none" data-pid="${promptID}"  type="${type}" class="largeTextEntry" />
+						<button id="submit_${promptID}" data-pid="${promptID}" style="width:120px; background-color: #fff; position: relative;border: 1px solid #999; margin: 0 0 0 55px;" data-translate='ok'>✔ OK</button>
+						<button id="cancel_${promptID}" data-pid="${promptID}" style="width:120px; background-color: #fff; position: relative;border: 1px solid #999; margin: 0;" data-translate='cancel'>❌ Cancel</button>
+					</div>
+				</div>
+				<div id="modalBackdrop_${promptID}" class="${backdropClass}" style="z-index:${zindex + 1}"></div>`;
+		}
+
+		document.body.insertAdjacentHTML("beforeend", modalTemplate); // Insert modal at body end
+
+		document.getElementById("input_" + promptID).focus();
+
+		if (value !== false) {
+			if (time) {
+				document.getElementById("input_" + promptID).value = parseInt(value / 60);
+				document.getElementById("input_" + promptID + "_sec").value = parseInt(value) % 60;
+			} else {
+				document.getElementById("input_" + promptID).value = value;
+			}
+		}
+
+		if (time) {
+			document.getElementById("input_" + promptID).addEventListener("keyup", function (event) {
+				if (event.key === "Enter") {
+					document.getElementById("input_" + promptID + "_sec").focus();
+				}
+			});
+			document.getElementById("input_" + promptID + "_sec").addEventListener("keyup", function (event) {
+				if (event.key === "Enter") {
+					document.getElementById("submit_" + promptID).focus();
+				}
+			});
+			document.getElementById("countup_" + promptID).addEventListener("click", function (event) {
+				if (document.getElementById("countup_" + promptID).checked) {
+					document.getElementById("input_" + promptID).disabled = true;
+					document.getElementById("input_" + promptID + "_sec").disabled = true;
+				} else {
+					document.getElementById("input_" + promptID).disabled = false;
+					document.getElementById("input_" + promptID + "_sec").disabled = false;
+					delete document.getElementById("input_" + promptID).disabled;
+					delete document.getElementById("input_" + promptID + "_sec").disabled;
+				}
+			});
+		} else {
+			document.getElementById("input_" + promptID).addEventListener("keyup", function (event) {
+				if (event.key === "Enter") {
+					var pid = event.target.dataset.pid;
+					result = document.getElementById("input_" + pid).value;
+					document.getElementById("modal_" + pid).remove();
+					document.getElementById("modalBackdrop_" + pid).remove();
+					Prompts[pid].resolve();
+				}
+			});
+		}
+
+		try {
+			document.getElementById("submit_" + promptID).addEventListener("click", function (event) {
+				var pid = event.target.dataset.pid;
+				if (time) {
+					result = parseInt(document.getElementById("input_" + pid + "_sec").value) + parseInt(document.getElementById("input_" + pid).value) * 60;
+
+					if (document.getElementById("countup_" + promptID).checked) {
+						result = 0;
+					}
+				} else {
+					result = document.getElementById("input_" + pid).value;
+				}
+
+				document.getElementById("modal_" + pid).remove();
+				document.getElementById("modalBackdrop_" + pid).remove();
+
+				Prompts[pid].resolve();
+			});
+		} catch (e) {}
+
+		try {
+			document.getElementById("cancel_" + promptID).addEventListener("click", function (event) {
+				var pid = event.target.dataset.pid;
+				document.getElementById("modal_" + pid).remove();
+				document.getElementById("modalBackdrop_" + pid).remove();
+				Prompts[pid].resolve();
+			});
+		} catch (e) {}
+
+		try {
+			document.getElementById("close_" + promptID).addEventListener("click", function (event) {
+				var pid = event.target.dataset.pid;
+				document.getElementById("modal_" + pid).remove();
+				document.getElementById("modalBackdrop_" + pid).remove();
+				Prompts[pid].resolve();
+			});
+		} catch (e) {}
+
+		getById("modal_" + promptID).addEventListener("click", function (e) {
+			e.stopPropagation();
+			return false;
+		});
+		miniTranslate(getById("modal_" + promptID));
+		return;
+	});
+	return result;
+}
+
+async function promptRecordingOptions(inputText, block = false, defaultOptions = {}) {
+    var result = null;
+	// console.log(defaultOptions);
+	var defaultVideoBitrate = 6000;
+	var defaultAudioBitrate = 80;
+	
+	if (defaultOptions.audioOnly && !defaultOptions.usePCM){
+		defaultAudioBitrate = defaultOptions.bitrate || 80;
+	} else if (!defaultOptions.audioOnly){
+		defaultVideoBitrate = defaultOptions.bitrate || 6000;
+	}
+	
+    if (session.beepToNotify) {
+        playtone();
+    }
+	
+	// Helper functions for bitrate controls
+	function updateBitrateControls(promptID) {
+		const audioOnly = document.getElementById(`audioOnly_${promptID}`).checked;
+		const usePCM = document.getElementById(`usePCM_${promptID}`).checked;
+		const pcmContainer = document.getElementById(`audioFormatContainer_${promptID}`);
+		const slider = document.getElementById(`bitrateSlider_${promptID}`);
+		const value = document.getElementById(`bitrateValue_${promptID}`);
+		const bitrateLabel = document.getElementById(`bitrateLabel_${promptID}`);
+		
+		// PCM option always available
+		pcmContainer.style.opacity = '1';
+		pcmContainer.style.pointerEvents = 'auto';
+		bitrateLabel.parentNode.style.opacity = "1";
+		bitrateLabel.parentNode.style.pointerEvents = 'auto';
+		//document.getElementById(`usePCM_${promptID}`).disabled = false;
+		
+		// Update bitrate controls based on mode
+		if (audioOnly && usePCM) {
+			// Audio-only PCM mode
+			bitrateLabel.textContent = "Uncompressed PCM16 audio";
+			bitrateLabel.parentNode.style.opacity = "0.5";
+			bitrateLabel.parentNode.style.pointerEvents = 'none';
+			slider.disabled = true;
+			value.disabled = true;
+			slider.value = "";
+			value.value = "";
+		} else if (audioOnly && !usePCM) {
+			// Audio-only OPUS mode
+			bitrateLabel.textContent = "Audio recording bitrate (OPUS):";
+			slider.disabled = false;
+			value.disabled = false;
+			slider.min = "1";
+			slider.max = "128";
+			slider.value = defaultAudioBitrate;
+			slider.step = "1";
+			value.value = defaultAudioBitrate;
+		} else if (!audioOnly && usePCM) {
+			// Video + PCM audio mode
+			bitrateLabel.textContent = "Video bitrate (with PCM16 audio):";
+			slider.disabled = false;
+			value.disabled = false;
+			slider.min = "50";
+			slider.max = "10000";
+			slider.value = defaultVideoBitrate;
+			slider.step = "100";
+			value.value = defaultVideoBitrate;
+		} else {
+			// Video + OPUS audio mode
+			bitrateLabel.textContent = "Recording Bitrate:";
+			slider.disabled = false;
+			value.disabled = false;
+			slider.min = "50";
+			slider.max = "10000";
+			slider.value = defaultVideoBitrate;
+			slider.step = "100";
+			value.value = defaultVideoBitrate;
+		}
+		
+		updateBitrateQuality(promptID);
+	}
+
+	function updateBitrateValue(promptID) {
+		const value = document.getElementById(`bitrateSlider_${promptID}`).value;
+		document.getElementById(`bitrateValue_${promptID}`).value = value;
+		updateBitrateQuality(promptID);
+	}
+
+	function updateBitrateSlider(promptID) {
+		const value = document.getElementById(`bitrateValue_${promptID}`).value;
+		document.getElementById(`bitrateSlider_${promptID}`).value = value;
+		updateBitrateQuality(promptID);
+	}
+
+	function updateBitrateQuality(promptID) {
+		const audioOnly = document.getElementById(`audioOnly_${promptID}`).checked;
+		const usePCM = document.getElementById(`usePCM_${promptID}`).checked;
+		const value = parseInt(document.getElementById(`bitrateValue_${promptID}`).value);
+		const qualitySpan = document.getElementById(`bitrateQuality_${promptID}`);
+		
+		if (audioOnly && usePCM) {
+			qualitySpan.textContent = "N/A";
+			return;
+		}
+		
+		if (audioOnly) {
+			if (value < 32) qualitySpan.textContent = "Low";
+			else if (value >= 80) qualitySpan.textContent = "High";
+			else qualitySpan.textContent = "Medium";
+			defaultAudioBitrate = value;
+		} else {
+			if (value < 2000) qualitySpan.textContent = "Low";
+			else if (value >= 6000) qualitySpan.textContent = "High";
+			else qualitySpan.textContent = "Medium";
+			defaultVideoBitrate = value;
+		}
+	}
+    
+    await new Promise((resolve, reject) => {
+        var promptID = "pid_" + Math.random().toString(36).substr(2, 9);
+        Prompts[promptID] = {};
+        Prompts[promptID].resolve = resolve;
+        Prompts[promptID].reject = reject;
+
+        var zindex = 32 + document.querySelectorAll(".promptModal").length + document.querySelectorAll(".alertModal").length;
+        var backdropClass = block ? "opaqueBackdrop" : "modalBackdrop";
+
+		inputText = "<h2>Recording setup</h2><br>" + inputText.replace(/\n/g, "<br />");
+
+        const modalTemplate = `<div id="modal_${promptID}" class="promptModal" style="z-index:${zindex + 2}">    
+            <div class="promptModalInner">
+                <span id="close_${promptID}" class='modalClose' data-pid="${promptID}">×</span>
+                <span class='promptModalMessage'>${inputText}</span>
+                
+                <!-- Recording Options -->
+                <div class="recording-options" style="margin: 20px; padding:5px 0;">
+                    <label title="Note: the audio might not be received as PCM; this just records it in PCM." id="audioFormatContainer_${promptID}" style="display: block; margin: 20px;">
+                        <input title="Note: the audio might not be received as PCM; this just records it in PCM."  type="checkbox" id="usePCM_${promptID}" data-pid="${promptID}">
+                        Use PCM audio format
+                    </label>
+					
+					<label style="display: block; margin: 20px;">
+                        <input type="checkbox" id="audioOnly_${promptID}" data-pid="${promptID}">
+                        Audio-only recording
+                    </label>
+                </div>
+
+                <!-- Bitrate Controls -->
+                <div class="bitrate-controls" style="margin: 30px 0 10px 0;">
+                    <label id="bitrateLabel_${promptID}">Recording Bitrate:</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="range" 
+                            id="bitrateSlider_${promptID}" 
+                            min="50" 
+                            max="10000" 
+                            value="${defaultVideoBitrate || 6000}"
+                            step="100"
+                            style="flex: 1;"
+                        >
+                        <input type="number" 
+                            id="bitrateValue_${promptID}" 
+                            value="${defaultVideoBitrate || 6000}"
+                            style="width: 80px;"
+                        >
+                        <span style="min-width:75px;" id="bitrateQuality_${promptID}">High</span>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button style="font-size: large;flex:1;" alt="Start recording" title="Start recording the video to disk" id="submit_${promptID}" data-pid="${promptID}" 
+                        style="flex: 1; padding: 11px 8px">✔ Start Recording</button>
+                    <button style="font-size: large;flex:1;" alt="Cancel" title="Cancel the recording" id="cancel_${promptID}" data-pid="${promptID}" 
+                        style="flex: 1; padding: 11px 8px">❌ Cancel</button>
+                </div>
+            </div>
+        </div>start record
+        <div id="modalBackdrop_${promptID}" class="${backdropClass}" style="z-index:${zindex + 1}"></div>`;
+
+        document.body.insertAdjacentHTML("beforeend", modalTemplate);
+
+        // Set default values if provided
+        if (defaultOptions.audioOnly) {
+            document.getElementById(`audioOnly_${promptID}`).checked = true;
+            updateBitrateControls(promptID);
+        }
+        if (defaultOptions.usePCM) {
+            document.getElementById(`usePCM_${promptID}`).checked = true;
+			if (defaultOptions.audioOnly) {
+				const bitrateLabel = document.getElementById(`bitrateLabel_${promptID}`);
+				bitrateLabel.textContent = "Uncompressed PCM16 audio";
+				bitrateLabel.parentNode.style.opacity = "0.5";
+				bitrateLabel.parentNode.style.pointerEvents = 'none';
+			} else {
+				const bitrateLabel = document.getElementById(`bitrateLabel_${promptID}`);
+				bitrateLabel.textContent = "Video bitrate (with PCM16 audio):";
+			}
+			
+        }
+
+        // Add event listeners
+        document.getElementById(`audioOnly_${promptID}`).addEventListener("change", () => updateBitrateControls(promptID));
+        document.getElementById(`usePCM_${promptID}`).addEventListener("change", () => updateBitrateControls(promptID));
+        document.getElementById(`bitrateSlider_${promptID}`).addEventListener("input", () => updateBitrateValue(promptID));
+        document.getElementById(`bitrateValue_${promptID}`).addEventListener("change", () => updateBitrateSlider(promptID));
+
+        // Submit handler
+        document.getElementById(`submit_${promptID}`).addEventListener("click", function(event) {
+            const pid = event.target.dataset.pid;
+            result = {
+                audioOnly: document.getElementById(`audioOnly_${pid}`).checked,
+                usePCM: document.getElementById(`usePCM_${pid}`).checked,
+                bitrate: parseInt(document.getElementById(`bitrateValue_${pid}`).value)
+            };
+            document.getElementById(`modal_${pid}`).remove();
+            document.getElementById(`modalBackdrop_${pid}`).remove();
+            Prompts[pid].resolve();
+        });
+
+        // Cancel handler
+        document.getElementById(`cancel_${promptID}`).addEventListener("click", function(event) {
+            const pid = event.target.dataset.pid;
+            result = null;
+            document.getElementById(`modal_${pid}`).remove();
+            document.getElementById(`modalBackdrop_${pid}`).remove();
+            Prompts[pid].resolve();
+        });
+
+        // Close handler
+        document.getElementById(`close_${promptID}`).addEventListener("click", function(event) {
+            const pid = event.target.dataset.pid;
+            result = null;
+            document.getElementById(`modal_${pid}`).remove();
+            document.getElementById(`modalBackdrop_${pid}`).remove();
+            Prompts[pid].resolve();
+        });
+
+        // Stop propagation on modal click
+        document.getElementById(`modal_${promptID}`).addEventListener("click", function(e) {
+            e.stopPropagation();
+            return false;
+        });
+
+        // Translate if needed
+        miniTranslate(document.getElementById(`modal_${promptID}`));
+    });
+
+    return result;
+}
+
+
+async function promptAltRecord(inputText, block = false, asterix = false, value = false) {
 	var result = null;
 	if (session.beepToNotify) {
 		playtone();
@@ -5088,6 +5520,8 @@ function updateMixer(e = false) {
 	}
 }
 
+
+
 function updateMixerRun(e = false) {
 	// this is the main auto-mixing code.  It's a giant function that runs when there are changes to screensize, video track statuses, etc.
 	try {
@@ -5361,12 +5795,12 @@ function updateMixerRun(e = false) {
 		}
 
 		var delayedRequestList = {};
-
+		
 		function delayedRequestRate(bandwidth, UUID, optimizeAudio = false, lock = null) {
 			delayedRequestList[UUID] = [bandwidth, UUID, optimizeAudio, lock];
 		}
 
-		if (soloVideo && soloVideo in session.rpcs) {
+		if (soloVideo && soloVideo in session.rpcs) {  // this technically can be a scene or guest
 			// remote guest being full screened; infocus == UUID
 			mediaPool = []; // remove myself from fullscreen
 
@@ -5392,16 +5826,19 @@ function updateMixerRun(e = false) {
 					try {
 						if (session.rpcs[j].videoElement && session.rpcs[j].videoElement.style.display !== "none") {
 							// Add it if not hidden
-
-							if (document.pictureInPictureElement && document.pictureInPictureElement.id && document.pictureInPictureElement.id == session.rpcs[j].videoElement.id) {
-								var bitratePIP = parseInt(session.zoomedBitrate / 4);
-								//warnUser("GOOD");
-								delayedRequestRate(bitratePIP, j);
+							if (session.scene!==false){
+								//delayedRequestRate(session.hiddenSceneViewBitrate, j);
 							} else {
-								delayedRequestRate(0, j); // disable the video of non-fullscreen videos
-							}
-							if (session.rpcs[j].videoElement.srcObject && session.rpcs[j].videoElement.srcObject.getAudioTracks().length) {
-								//	mediaPool_invisible.push(session.rpcs[j].videoElement);
+								if (document.pictureInPictureElement && document.pictureInPictureElement.id && document.pictureInPictureElement.id == session.rpcs[j].videoElement.id) {
+									var bitratePIP = parseInt(session.zoomedBitrate / 4);
+									//warnUser("GOOD");
+									delayedRequestRate(bitratePIP, j);
+								} else {
+									delayedRequestRate(0, j); // disable the video of non-fullscreen videos
+								}
+								//if (session.rpcs[j].videoElement.srcObject && session.rpcs[j].videoElement.srcObject.getAudioTracks().length) {
+									//	mediaPool_invisible.push(session.rpcs[j].videoElement);
+								//}
 							}
 						} else if (session.rpcs[j].videoElement) {
 							delayedRequestRate(0, j, true); // disable the video of non-fullscreen videos
@@ -5421,6 +5858,10 @@ function updateMixerRun(e = false) {
 							mediaPool.push(session.rpcs[j].iframeEle);
 							continue;
 						} else if (session.rpcs[j].videoElement) {
+							
+							mediaPool.push(session.rpcs[j].videoElement); // active speaker
+							session.rpcs[j].videoElement.style.visibility = "visible";
+							
 							if (session.rpcs[j].order !== false) {
 								session.rpcs[j].videoElement.order = session.rpcs[j].order;
 							} else {
@@ -5432,29 +5873,38 @@ function updateMixerRun(e = false) {
 							//	delayedRequestRate(0, j); // keep audio good, but disable video
 							//} else {
 
-							var totalRoomBitrate = session.totalRoomBitrate;
-							if (session.controlRoomBitrate !== false && session.controlRoomBitrate !== true) {
-								totalRoomBitrate = Math.min(session.controlRoomBitrate, totalRoomBitrate);
+							if (session.scene!==false){
+								// var targetBitrate = session.bitrate;
+								// if (session.totalSceneBitrate) {
+									// if (session.bitrate !== false) {
+										// targetBitrate = Math.min(session.bitrate, session.totalSceneBitrate);
+									// }
+								// }
+								// if (targetBitrate===false){
+									// delayedRequestRate(-1, j); // unlock
+								// } else {
+									// delayedRequestRate(targetBitrate, j);
+								// }
+								
+							} else {
+								var totalRoomBitrate = session.totalRoomBitrate;
+								if (session.controlRoomBitrate !== false && session.controlRoomBitrate !== true) {
+									totalRoomBitrate = Math.min(session.controlRoomBitrate, totalRoomBitrate);
+								}
+								var targetBitrate = session.zoomedBitrate;
+								if (totalRoomBitrate > session.zoomedBitrate) {
+									targetBitrate = totalRoomBitrate;
+								}
+								
+								delayedRequestRate(targetBitrate, j); // 1.2mbps is decent, no? in-focus, so higher bitrate
 							}
-							var targetBitrate = session.zoomedBitrate;
-							if (totalRoomBitrate > session.zoomedBitrate) {
-								targetBitrate = totalRoomBitrate;
-							}
-
-							mediaPool.push(session.rpcs[j].videoElement); // active speaker
-							session.rpcs[j].videoElement.style.visibility = "visible";
-							//if ((session.rpcs[j].targetBandwidth!==-1) && (session.rpcs[j].targetBandwidth<targetBitrate)){
-							delayedRequestRate(targetBitrate, j); // 1.2mbps is decent, no? in-focus, so higher bitrate
-							//	errorlog(targetBitrate);
-							//}
-							//}
 						}
 					} catch (e) {
 						errorlog(e);
 					}
 				}
 			}
-		} else if (soloVideo && soloVideo === true) {
+		} else if (soloVideo && soloVideo === true) { // this cannot be a scene, as you can't have yourself in a scene.  
 			// well, fullscreen myself. "true" represents me. UUID would be for others.
 			// already added myself to this as fullscreen
 			for (var j in session.rpcs) {
@@ -5886,7 +6336,11 @@ function updateMixerRun(e = false) {
 								delayedRequestRate(sceneBitrate, i); // well, screw that. Setting it to room quality.
 							}
 						} else {
-							delayedRequestRate(-1, i); // unlock.
+							if (screenShareBitrate !== false && session.rpcs[i].screenShareState) {
+								delayedRequestRate(screenShareBitrate, i); // well, screw that. Setting it to room quality.
+							} else {
+								delayedRequestRate(-1, i); // unlock.
+							}
 						}
 						if (session.rpcs[i].order !== false) {
 							session.rpcs[i].videoElement.order = session.rpcs[i].order;
@@ -8655,7 +9109,7 @@ session.remoteExposure = function (exposure) { // exposure is a float between 0 
             // Apply the new exposure time
             track0.applyConstraints({ advanced: [{ exposureTime: newExposureTime }] });
 
-            console.log(`Applied new exposure time: ${newExposureTime}`);
+            log(`Applied new exposure time: ${newExposureTime}`);
         } else if (Firefox) {
             warnlog("Firefox doesn't support this feature");
         }
@@ -11435,7 +11889,7 @@ function simpleDraw(reinit = false) {
 
 	function fde1() {
 		try {
-			console.log("LOADED simpleDraw()");
+			log("LOADED simpleDraw()");
 
 			session.canvas.height = 2 * parseInt(session.canvasSource.height / 2);
 			session.canvas.width = 2 * parseInt(session.canvasSource.width / 2);
@@ -14544,9 +14998,10 @@ function toggleMute(apply = false, event = false) {
 					track.enabled = true;
 				});
 			}
-			//if (event){ // this might be a good solution, if there is a problem.
-			refreshMicrophoneDevice(); // to address an issue with iOS/iPad devices losing audio when an inbound audio souce hits.
-			//}
+			
+			if (!apply && event && (iOS || iPad || SafariVersion)){ // manually refreshing the mic
+				refreshMicrophoneDevice(); // to address an issue with iOS/iPad devices losing audio when an inbound audio souce hits.
+			}
 		//}
 
 		// toggleMute(false, event)
@@ -15333,6 +15788,37 @@ async function toggleSettings(forceShow = false) {
 		document.getElementById("videoSettings3").style.display = "none";
 	}
 	pokeIframeAPI("settings-menu-state", toggleSettingsState);
+}
+
+let wakeLockObject = null;
+async function acquireWakeLock() {
+  if ('wakeLock' in navigator) {
+	try {
+	  wakeLockObject = await navigator.wakeLock.request('screen');
+	  log('Wake Lock is active');
+	} catch (err) {
+	  errorlog(err);
+	}
+  } else {
+	warnlog('Wake Lock API is not supported in this browser');
+  }
+}
+function handleVisibilityChangeWakeLock() {
+  if (wakeLockObject !== null && document.visibilityState === 'visible') {
+	acquireWakeLock();
+  }
+}
+function releaseWakeLock() {
+  if (wakeLockObject) {
+	wakeLockObject.release()
+	  .then(() => {
+		wakeLockObject = null;
+		log('Wake Lock is released');
+	  })
+	  .catch((err) => {
+		errorlog(err);
+	  });
+  }
 }
 
 session.hangup = function (reload = false, estop = false) {
@@ -17755,7 +18241,7 @@ async function publishScreen() {
 		};
 	}
 
-	var audioSelect = getById("audioSourceScreenshare");
+	// var audioSelect = selectedScreenShareAudioDevices;
 	var outputSelect = getById("outputSourceScreenshare");
 
 	try {
@@ -17766,7 +18252,7 @@ async function publishScreen() {
 		warnlog(e);
 	}
 
-	return await publishScreen2(constraints, audioSelect, true, overrideFramerate)
+	return await publishScreen2(constraints, selectedScreenShareAudioDevices, true, overrideFramerate)
 		.then(res => {
 			if (res == false) {
 				return;
@@ -22462,7 +22948,7 @@ function createControlBox(UUID, soloLink, streamID, slot_init = false) {
 		getById("guestFeeds").appendChild(container);
 	}
 	
-	controls.innerHTML += "<div id='advanced_audio_director_" + UUID + "' class='hidden advancedAudioSettings'></div>";
+	//controls.innerHTML += "<div id='advanced_audio_director_" + UUID + "' class='hidden advancedAudioSettings'></div>";
 	if (session.rpcs[UUID].pseudoguest){
 		controls.querySelectorAll("[data-action-type]").forEach(ele => {
 			ele.dataset.UUID = UUID;
@@ -22470,7 +22956,7 @@ function createControlBox(UUID, soloLink, streamID, slot_init = false) {
 		});
 		return;
 	}
-	controls.innerHTML += "<div id='advanced_video_director_" + UUID + "' class='hidden advancedVideoSettings'></div>";
+	//controls.innerHTML += "<div id='advanced_video_director_" + UUID + "' class='hidden advancedVideoSettings'></div>";
 
 	if (!session.rpcs[UUID].voiceMeter) {
 		if (session.meterStyle == 1) {
@@ -23077,73 +23563,93 @@ function requestOutputAudioStream() {
 	}
 }
 
+let selectedScreenShareAudioDevices = [];
 async function requestAudioStream() {
-	try {
-		//warnlog("GET USER MEDIA");
-		warnlog("navigator.mediaDevices.getUserMedia starting...");
-		return await navigator.mediaDevices
-			.getUserMedia({
-				audio: true,
-				video: false
-			})
-			.then(async function (stream1) {
-				// Apple needs thi to happen before I can access EnumerateDevices.
-				log("get media sources; request audio stream");
-				return await enumerateDevices().then(function async(deviceInfos) {
-					stream1.getTracks().forEach(function (track) {
-						// We don't want to keep it without audio; so we are going to try to add audio now.
-						track.stop(); // I need to do this after the enumeration step, else it breaks firefox's labels
-					});
-					log("updating audio");
-					const audioInputSelect = getById("audioSourceScreenshare");
-					audioInputSelect.remove(1);
-					audioInputSelect.removeAttribute("onchange");
+    const deviceList = getById('audioDeviceList');
+    const errorElement = getById('audioSelectError');
+    const showDevicesButton = getById('showAudioDevices');
 
-					for (let i = 0; i !== deviceInfos.length; ++i) {
-						const deviceInfo = deviceInfos[i];
-						if (deviceInfo == null) {
-							continue;
-						}
-						const option = document.createElement("option");
-						option.value = deviceInfo.deviceId;
-						if (deviceInfo.kind === "audioinput") {
-							option.text = deviceInfo.label || `Microphone ${audioInputSelect.length + 1}`;
-							audioInputSelect.appendChild(option);
-						} else {
-							log("Some other kind of source/device: ", deviceInfo);
-						}
-					}
-					audioInputSelect.style.minHeight = (audioInputSelect.childElementCount + 1) * 1.15 * 16 + "px";
-					audioInputSelect.style.minWidth = "342px";
+    try {
+        // First get permission to access audio devices
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        
+        // Stop the tracks right after getting permission
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Now enumerate devices
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(device => device.kind === 'audioinput');
 
-					// normalizeDeviceLabel(track.label)
-					
-					if (session.audioDevice && typeof session.audioDevice === "object" && session.audioDevice.length) {
-						for (let i = 0; i !== audioInputSelect.length; ++i) {
-							let deviceInfo = audioInputSelect[i];
-							if (session.audioDevice.includes(deviceInfo.value)) {
-								deviceInfo.selected = true;
-							} else if (normalizeDeviceLabel(deviceInfo.innerText).startsWith(session.audioDevice)) {
-								deviceInfo.selected = true;
-							} else if (normalizeDeviceLabel(deviceInfo.innerText).includes(session.audioDevice)) {
-								deviceInfo.selected = true;
-							}
-						}
-					}
-				});
-			});
-	} catch (e) {
-		if (!session.cleanOutput) {
-			if (window.isSecureContext) {
-				warnUser("An error has occured when trying to access the default audio device. The reason is not known.");
-			} else if (iOS || iPad) {
-				warnUser("iOS version 13.4 and up is generally recommended; older than iOS 11 is not supported.");
-			} else {
-				warnUser("Error accessing the default audio device.\n\nThe website may be loaded in an insecure context.\n\nPlease see: https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia");
-			}
-		}
-	}
+        // Clear existing list
+        deviceList.innerHTML = '';
+
+        // Create checkbox for each device
+        audioInputs.forEach(device => {
+            const deviceLabel = device.label || `Microphone ${device.deviceId.slice(0, 4)}`;
+            
+            const div = document.createElement('div');
+            div.className = 'audio-device-item';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = device.deviceId;
+            checkbox.value = device.deviceId;
+            
+            // Check if this device was previously selected
+            if (selectedScreenShareAudioDevices.includes(device.deviceId)) {
+                checkbox.checked = true;
+            }
+
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    if (!selectedScreenShareAudioDevices.includes(this.value)) {
+                        selectedScreenShareAudioDevices.push(this.value);
+                    }
+                } else {
+                    selectedScreenShareAudioDevices = selectedScreenShareAudioDevices.filter(id => id !== this.value);
+                }
+                // You can trigger any necessary callbacks here
+                //audioSourcesUpdated(selectedScreenShareAudioDevices);
+            });
+
+            const label = document.createElement('label');
+            label.htmlFor = device.deviceId;
+            label.textContent = deviceLabel;
+
+            div.appendChild(checkbox);
+            div.appendChild(label);
+            deviceList.appendChild(div);
+        });
+
+        // Show the device list and hide the button
+        deviceList.style.display = 'block';
+        showDevicesButton.style.display = 'none';
+        errorElement.style.display = 'none';
+
+    } catch (err) {
+		
+        let errorMessage = err.message || 'An error occurred while accessing audio devices.';
+        
+        if (!window.isSecureContext) {
+            errorMessage = 'This website must be loaded in a secure context (HTTPS) to access audio devices.';
+        } else if (/ipad|iphone|ipod/.test(navigator.userAgent.toLowerCase())) {
+            errorMessage = 'iOS 13.4 or later is recommended for audio device access.';
+        }
+        
+        errorElement.textContent = errorMessage;
+        errorElement.style.display = 'block';
+    }
 }
+
+function audioSourcesUpdated(selectedDevices) {
+    // This function can be customized to handle what happens when selections change
+    console.log('Selected audio devices:', selectedDevices);
+    // You might want to update your session or trigger other functionality here
+    if (typeof session !== 'undefined') {
+        session.audioDevice = selectedDevices;
+    }
+}
+
 
 function saveSettings() {
 	if (session.store) {
@@ -24495,13 +25001,45 @@ function refreshVideoDevice() {
 	activatedPreview = false;
 	grabVideo(session.quality, "videosource", "select#videoSource3");
 }
-function refreshMicrophoneDevice() {
+
+function refreshMicrophoneDevice(UUID=false) {
 	if (session.screenShareState || session.mediafileShare) {
 		log("can't refresh a screenshare or fileshare");
+		
+		if (UUID){
+			var data = {};
+			data.UUID = UUID;
+			data.rejected = "can't refresh mic during screen or file share";
+			session.sendMessage(data, data.UUID);
+		}
+		
 		return;
 	}
 	log("refreshing microphone..");
-	grabAudio("#audioSource3");
+	activatedPreview = false;
+	grabAudio("#audioSource3", null, false, UUID);	
+}
+
+function directRefreshMicrophone(ele){
+	var UUID = ele.dataset.UUID;
+	if (!UUID){return;}
+	//  remoteAudioLabel_
+	// '[data-action-type="refresh-mic"][data--u-u-i-d="' + UUID + '"]'
+	
+	if (getById("remoteAudioLabel_" + UUID).dataset.nomic){
+		warnUser("No microphone is enabled for this user\n\nNothing to reresh.");
+	}
+	var data = {};
+	data.refreshMicrophone = true;
+	data.UUID = UUID;
+	if (session.sendRequest(data, UUID)){ // Viewer is requesting the PUBLISHER
+		ele.classList.add("pressed");
+		setTimeout((ele)=>{
+			if(ele){
+				ele.classList.remove("pressed");
+			}
+		},400,ele);
+	}
 }
 
 function gotDevicesRemote(deviceInfos, UUID) {
@@ -24794,6 +25332,40 @@ function showNotification(title, body = "") {
 	}
 }
 
+function toFirefoxConstraint(chromeConstraint) {
+    if (!chromeConstraint || typeof chromeConstraint !== 'object') {
+        return chromeConstraint;
+    }
+
+    const result = { ...chromeConstraint };
+	
+	if (result.audio && typeof result.audio === 'object') {
+        result.audio = flattenConstraints(result.audio);
+    }
+
+    if (result.video && typeof result.video === 'object') {
+        result.video = flattenConstraints(result.video);
+    }
+
+	return result;
+}
+
+function flattenConstraints(constraints) {
+    const result = { ...constraints };
+    
+    for (const [key, value] of Object.entries(constraints)) {
+        if (value && typeof value === 'object') {
+            if ('exact' in value) {
+                result[key] = value.exact;
+            } else if ('ideal' in value) {
+                result[key] = value.ideal;
+            }
+        }
+    }
+
+    return result;
+}
+
 async function getAudioOnly(selector, trackid = null, override = false) {
 	var audioSelect = document.querySelector(selector).querySelectorAll("input,option");
 	var audioList = [];
@@ -24906,6 +25478,11 @@ async function getAudioOnly(selector, trackid = null, override = false) {
 
 		log("CONSTRAINT");
 		log(constraint);
+		
+		if (Firefox){
+			constraint = toFirefoxConstraint(constraint);
+		}
+		
 		warnlog("navigator.mediaDevices.getUserMedia starting...");
 		if (navigator.mediaDevices){
 			var stream = await navigator.mediaDevices
@@ -25801,6 +26378,11 @@ if (navigator.userAgent.toLowerCase().indexOf(" electron/") > -1) {
 								}
 							} catch (e) {}
 							///
+							
+							//if (Firefox){ // this is electron
+							//	new_constraints = toFirefoxConstraint(new_constraints);
+							//}
+							
 							warnlog("navigator.mediaDevices.getUserMedia starting...");
 							const stream = await window.navigator.mediaDevices.getUserMedia(new_constraints);
 							resolve(stream);
@@ -25859,6 +26441,11 @@ if (navigator.userAgent.toLowerCase().indexOf(" electron/") > -1) {
 								}
 							} catch (e) {}
 							///
+							
+							//if (Firefox){
+							//	new_constraints = toFirefoxConstraint(new_constraints);
+							//}
+							
 							warnlog("navigator.mediaDevices.getUserMedia starting...");
 							const stream = await window.navigator.mediaDevices.getUserMedia(new_constraints);
 							resolve(stream);
@@ -25900,6 +26487,11 @@ if (navigator.userAgent.toLowerCase().indexOf(" electron/") > -1) {
 							} catch (e) {}
 							warnlog(new_constraints);
 							///
+							
+							//if (Firefox){
+							//	new_constraints = toFirefoxConstraint(new_constraints);
+							//}
+							
 							warnlog("navigator.mediaDevices.getUserMedia starting...");
 							const stream = await window.navigator.mediaDevices.getUserMedia(new_constraints);
 							resolve(stream);
@@ -25984,6 +26576,11 @@ if (navigator.userAgent.toLowerCase().indexOf(" electron/") > -1) {
 										};
 										new_constraints.video.mandatory.maxFrameRate = 1;
 										warnlog(new_constraints);
+										
+										//if (Firefox){
+										//	new_constraints = toFirefoxConstraint(new_constraints);
+										//}
+										
 										warnlog("navigator.mediaDevices.getUserMedia starting...");
 										const stream = await window.navigator.mediaDevices.getUserMedia(new_constraints);
 										if (stream.getVideoTracks().length) {
@@ -26010,6 +26607,11 @@ if (navigator.userAgent.toLowerCase().indexOf(" electron/") > -1) {
 											};
 											new_constraints.video.mandatory.maxFrameRate = 1;
 											warnlog(new_constraints);
+											
+											//if (Firefox){
+											//	new_constraints = toFirefoxConstraint(new_constraints);
+											//}
+											
 											warnlog("navigator.mediaDevices.getUserMedia starting...");
 											audioStream = await window.navigator.mediaDevices.getUserMedia(new_constraints);
 											if (audioStream.getVideoTracks().length) {
@@ -26049,6 +26651,10 @@ if (navigator.userAgent.toLowerCase().indexOf(" electron/") > -1) {
 											}
 										} catch (e) {}
 										warnlog(new_constraints);
+										
+										//if (Firefox){
+										//	new_constraints = toFirefoxConstraint(new_constraints);
+										//}
 										warnlog("navigator.mediaDevices.getUserMedia starting...");
 										const stream = await window.navigator.mediaDevices.getUserMedia(new_constraints);
 
@@ -26432,6 +27038,9 @@ async function grabScreen(quality = 0, audio = true, videoOnEnd = false) {
 						if (!session.cleanOutput) {
 							warnUser(getTranslation("change-audio-output-device"), false, false);
 						}
+						setTimeout(function () {
+							grabScreen(quality, false);
+						}, 1);
 						return false;
 					} else {
 						setTimeout(function () {
@@ -26660,7 +27269,8 @@ function changeAudioDeviceById(deviceId, UUID = false) {
 				if (matched) {
 					//  this is just refreshing the device.
 					activatedPreview = false;
-					grabAudio("#audioSource3", UUID);
+					//grabAudio("#audioSource3", UUID);    
+					grabAudio("#audioSource3", null, false, UUID);				
 				} else if (UUID && !session.consent) {
 					window.focus();
 					confirmAlt("Allow the director to change your audio mic source?").then(res => {
@@ -26675,7 +27285,7 @@ function changeAudioDeviceById(deviceId, UUID = false) {
 								}
 							}
 							activatedPreview = false;
-							grabAudio("#audioSource3", UUID);
+							grabAudio("#audioSource3", null, false, UUID);		
 							//	});
 						} else {
 							try {
@@ -26697,7 +27307,7 @@ function changeAudioDeviceById(deviceId, UUID = false) {
 						}
 					}
 					activatedPreview = false;
-					grabAudio("#audioSource3", UUID);
+					grabAudio("#audioSource3", null, false, UUID);		
 					//	});
 				}
 			}
@@ -27272,6 +27882,11 @@ async function grabVideo(quality = 0, eleName = "previewWebcam", selector = "sel
 				if (getUserMediaRequestID !== gumID) {
 					return;
 				} // cancel
+				
+				if (Firefox){
+					constraints = toFirefoxConstraint(constraints);
+				}
+				
 				warnlog("navigator.mediaDevices.getUserMedia starting...");
 				navigator.mediaDevices
 					.getUserMedia(constraints)
@@ -28034,7 +28649,7 @@ async function grabAudio(selector = "#audioSource", trackid = null, override = f
 		callback();
 	}
 
-	senderAudioUpdate(callbackUUID);
+	senderAudioUpdate(callbackUUID); 
 }
 
 session.toggleSoloChat = function (UUID, event = false) {
@@ -28582,7 +29197,7 @@ session.applySoloChat = function (apply = true) {
 	}
 };
 
-function senderAudioUpdate(callback = false, tracks = false) {
+function senderAudioUpdate(callbackUUID = false, tracks = false) {
 	try {
 		if (!tracks) {
 			checkBasicStreamsExist();
@@ -28730,10 +29345,10 @@ function senderAudioUpdate(callback = false, tracks = false) {
 			}
 		} catch (e) {}
 
-		if (callback) {
+		if (callbackUUID) {
 			try {
 				var data = {};
-				data.UUID = callback;
+				data.UUID = callbackUUID;
 				data.audioOptions = listAudioSettingsPrep();
 				sendMediaDevices(data.UUID);
 				session.sendMessage(data, data.UUID);
@@ -29488,74 +30103,77 @@ async function publishScreen2(constraints, audioList = [], audio = true, overrid
 	var streams = [];
 	for (var i = 1; i < audioList.length; i++) {
 		// mic sources; not screen .
-		if (audioList[i].selected) {
-			var constraint = { video: false, audio: { deviceId: { exact: audioList[i].value } } };
+		var constraint = { video: false, audio: { deviceId: { exact: audioList[i] } } };
 
-			if (session.echoCancellation === false) {
-				// default should be ON.  we won't even add it since deviceId is specified and Browser defaults to on already
-				constraint.audio.echoCancellation = false;
-			} else {
-				constraint.audio.echoCancellation = true;
-			}
-			if (session.autoGainControl === false) {
-				constraint.audio.autoGainControl = false;
-			} else {
-				constraint.audio.autoGainControl = true;
-			}
-			if (session.noiseSuppression === false) {
-				constraint.audio.noiseSuppression = false;
-			} else {
-				constraint.audio.noiseSuppression = true;
-			}
-			
-			if (session.voiceIsolation === true) {
-				constraint.audio.voiceIsolation = true;
-			}
-
-			if (session.audioInputChannels) {
-				if (constraint.audio === true) {
-					constraint.audio = {};
-					constraint.audio.channelCount = session.audioInputChannels;
-				} else if (constraint.audio) {
-					constraint.audio.channelCount = session.audioInputChannels;
-				}
-			}
-
-			if (session.micSampleRate) {
-				if (constraint.audio === true) {
-					constraint.audio = {};
-					constraint.audio.sampleRate = parseInt(session.micSampleRate);
-				} else if (constraint.audio) {
-					constraint.audio.sampleRate = parseInt(session.micSampleRate);
-				}
-			}
-			if (session.micSampleSize) {
-				if (constraint.audio === true) {
-					constraint.audio = {};
-					constraint.audio.sampleSize = parseInt(session.micSampleSize);
-				} else if (constraint.audio) {
-					constraint.audio.sampleSize = parseInt(session.micSampleSize);
-				}
-			}
-			getUserMediaRequestID += 1;
-			var gumID = getUserMediaRequestID;
-			warnlog("navigator.mediaDevices.getUserMedia starting...");
-			await navigator.mediaDevices
-				.getUserMedia(constraint)
-				.then(stream => {
-					if (getUserMediaRequestID !== gumID) {
-						warnlog("GET USER MEDIA CALL HAS EXPIRED 3");
-						stream.getTracks().forEach(function (track) {
-							stream.removeTrack(track);
-							track.stop();
-							log("stopping old track");
-						});
-						return;
-					}
-					streams.push(stream);
-				})
-				.catch(errorlog);
+		if (session.echoCancellation === false) {
+			// default should be ON.  we won't even add it since deviceId is specified and Browser defaults to on already
+			constraint.audio.echoCancellation = false;
+		} else {
+			constraint.audio.echoCancellation = true;
 		}
+		if (session.autoGainControl === false) {
+			constraint.audio.autoGainControl = false;
+		} else {
+			constraint.audio.autoGainControl = true;
+		}
+		if (session.noiseSuppression === false) {
+			constraint.audio.noiseSuppression = false;
+		} else {
+			constraint.audio.noiseSuppression = true;
+		}
+		
+		if (session.voiceIsolation === true) {
+			constraint.audio.voiceIsolation = true;
+		}
+
+		if (session.audioInputChannels) {
+			if (constraint.audio === true) {
+				constraint.audio = {};
+				constraint.audio.channelCount = session.audioInputChannels;
+			} else if (constraint.audio) {
+				constraint.audio.channelCount = session.audioInputChannels;
+			}
+		}
+
+		if (session.micSampleRate) {
+			if (constraint.audio === true) {
+				constraint.audio = {};
+				constraint.audio.sampleRate = parseInt(session.micSampleRate);
+			} else if (constraint.audio) {
+				constraint.audio.sampleRate = parseInt(session.micSampleRate);
+			}
+		}
+		if (session.micSampleSize) {
+			if (constraint.audio === true) {
+				constraint.audio = {};
+				constraint.audio.sampleSize = parseInt(session.micSampleSize);
+			} else if (constraint.audio) {
+				constraint.audio.sampleSize = parseInt(session.micSampleSize);
+			}
+		}
+		getUserMediaRequestID += 1;
+		var gumID = getUserMediaRequestID;
+		
+		if (Firefox){
+			constraint = toFirefoxConstraint(constraint);
+		}
+		
+		warnlog("navigator.mediaDevices.getUserMedia starting...");
+		await navigator.mediaDevices
+			.getUserMedia(constraint)
+			.then(stream => {
+				if (getUserMediaRequestID !== gumID) {
+					warnlog("GET USER MEDIA CALL HAS EXPIRED 3");
+					stream.getTracks().forEach(function (track) {
+						stream.removeTrack(track);
+						track.stop();
+						log("stopping old track");
+					});
+					return;
+				}
+				streams.push(stream);
+			})
+			.catch(errorlog);
 	}
 
 	if (session.audioDevice === 0) {
@@ -29984,7 +30602,8 @@ async function publishScreen2(constraints, audioList = [], audio = true, overrid
 						if (!session.cleanOutput) {
 							warnUser(getTranslation("change-audio-output-device"), false, false);
 						}
-						return false;
+						constraints.audio = false;
+						return publishScreen2(constraints, audioList, false);
 					} else {
 						constraints.audio = false;
 						if (!session.cleanOutput) {
@@ -31540,9 +32159,18 @@ async function requestGoogleDriveRecord(ele, state = null, bitrate = null) {
 		msg.UUID = UUID;
 		if (bitrate === null) {
 			window.focus();
-			bitrate = await promptAlt(getTranslation("what-bitrate"), false, false, 6000);
-		}
-		if (bitrate) {
+			//bitrate = await promptAlt(getTranslation("what-bitrate"), false, false, 6000); 
+			let response = await promptRecordingOptions(getTranslation("what-bitrate-gdrive"));
+			if (response) {
+				msg.value = response.bitrate;
+				msg.recordConfig = response;
+				session.sendRequest(msg, msg.UUID);
+				ele.classList.add("pressed");
+				ele.ariaPressed = "true"; // "btn-HL-green"
+			} else {
+				return;
+			}
+		} else {
 			msg.value = bitrate;
 			session.sendRequest(msg, msg.UUID);
 			ele.classList.add("pressed");
@@ -31568,9 +32196,15 @@ async function requestVideoRecord(ele, state = null, bitrate = null) {
 		msg.UUID = UUID;
 		if (bitrate === null) {
 			window.focus();
-			bitrate = await promptAlt(getTranslation("what-bitrate"), false, false, 6000);
-		}
-		if (bitrate) {
+			let response = await promptRecordingOptions(getTranslation("what-bitrate"));
+			if (response) {
+				msg.value = response.bitrate;
+				msg.recordConfig = response;
+				session.sendRequest(msg, msg.UUID);
+				ele.classList.add("pressed");
+				ele.ariaPressed = "true"; // "btn-HL-green"
+			} else {return;}
+		} else {
 			msg.value = bitrate;
 			session.sendRequest(msg, msg.UUID);
 			ele.classList.add("pressed");
@@ -31718,12 +32352,32 @@ function toggleSystemPip(vid) {
 function updateDirectorsAudio(dataN, UUID) {
 	var audioEle = document.createElement("div");
 	query("#container_" + UUID + " .advancedAudioSettings").innerHTML = "";
-	query("#container_" + UUID + " .advancedAudioSettings").classList.remove("hidden");
+	
+	if (query('[data-action-type="advanced-audio-settings"][data--u-u-i-d="' + UUID + '"]').classList.contains("pressed")){
+		query("#container_" + UUID + " .advancedAudioSettings").classList.remove("hidden");
+	}
+	//query('[data-action-type="advanced-audio-settings"][data--u-u-i-d="' + UUID + '"]').classList.add("pressed");
+	//query('[data-action-type="advanced-audio-settings"][data--u-u-i-d="' + UUID + '"]').ariaPressed = "true";
 
 	//log(dataN);
 	if (!dataN.length) {
+		
+		var label = document.createElement("label");
+		label.innerText = "No microphone selected";
+		label.style.display = "block";
+		label.id = "remoteAudioLabel_" + UUID;
+		label.dataset.nomic = true;
+		label.classList.add("settingsLabel");
+		label.dataset.UUID = UUID;
+		audioEle.appendChild(label);
+		
+		query('[data-action-type="refresh-mic"][data--u-u-i-d="' + UUID + '"]').disabled = true;
+		
+		query("#container_" + UUID + " .advancedAudioSettings").appendChild(audioEle);
 		return;
 	}
+	
+	query('[data-action-type="refresh-mic"][data--u-u-i-d="' + UUID + '"]').disabled = false;
 
 	for (var n = 0; n < dataN.length; n += 1) {
 		var data = dataN[n];
@@ -32133,8 +32787,6 @@ function updateDirectorsAudio(dataN, UUID) {
 				audioEle.appendChild(label);
 			}
 		}
-
-		warnlog(data);
 
 		for (var i in data.audioConstraints) {
 			try {
@@ -35033,6 +35685,7 @@ async function requestBasicPermissions(constraint = { video: true, audio: true }
 		setTimeout(
 			async function (gumID, constraint, timerBasicCheck, callback, miconly) {
 				log("gumID: " + gumID);
+				log(constraint);
 				var removeAudio = false;
 				if (!constraint.audio && !constraint.video) {
 					constraint.audio = true;
@@ -35043,20 +35696,25 @@ async function requestBasicPermissions(constraint = { video: true, audio: true }
 				let videoPermission = "prompt";
 				let audioPermission = "prompt";
 
-				try {
-					const videoStatus = await navigator.permissions.query({ name: "camera" });
-					videoPermission = videoStatus.state;
-					const audioStatus = await navigator.permissions.query({ name: "microphone" });
-					audioPermission = audioStatus.state;
-				} catch (e) {
-					warnlog("Permissions API is not fully supported in this browser.");
-				}
+				if (Firefox && Firefox>=132){
+					console.warn("😱 see: https://bugzilla.mozilla.org/show_bug.cgi?id=1924572#c1");
+				} else {
+					try {
+						const videoStatus = await navigator.permissions.query({ name: "camera" });
+						videoPermission = videoStatus.state;
+						const audioStatus = await navigator.permissions.query({ name: "microphone" });
+						audioPermission = audioStatus.state;
+						log("audioPermission: "+audioPermission);
+					} catch (e) {
+						warnlog("Permissions API is not fully supported in this browser.");
+					}
 
-				if (videoPermission === "granted") {
-					constraint.video = false;
-				}
-				if (audioPermission === "granted") {
-					constraint.audio = false;
+					if (videoPermission === "granted") {
+						constraint.video = false;
+					}
+					if (audioPermission === "granted") {
+						constraint.audio = false;
+					}
 				}
 
 				if (!constraint.audio && !constraint.video) {
@@ -35071,6 +35729,10 @@ async function requestBasicPermissions(constraint = { video: true, audio: true }
 						callback(miconly);
 					}
 					return;
+				}
+				
+				if (Firefox){
+					constraint = toFirefoxConstraint(constraint);
 				}
 
 				warnlog("navigator.mediaDevices.getUserMedia starting...");
@@ -39323,6 +39985,7 @@ async function streamVideoToDropbox(filename) {
 
 var recordingBitratePromise = false;
 var defaultRecordingBitrate = false;
+var lastConfiguredRecordingSetup = false;
 async function recordVideo(target, event = null, videoKbps = false) {
 	// event.currentTarget,this.parentNode.parentNode.dataset.UUID
 
@@ -39351,8 +40014,6 @@ async function recordVideo(target, event = null, videoKbps = false) {
 		updateLocalRecordButton(UUID, 0);
 		return;
 	}
-
-	var audioKbps = false;
 
 	if (event === null) {
 		if (defaultRecordingBitrate === null) {
@@ -39405,21 +40066,33 @@ async function recordVideo(target, event = null, videoKbps = false) {
 	}
 
 	video.recorder = {};
+	
+	var configureRecording = {
+		bitrate: videoKbps,
+		usePCM: (videoKbps===0 || session.pcm) ? true:false,
+		audioOnly: (videoKbps!==false && videoKbps<=0) ? true:false
+	};
 
-	if (videoKbps === false) {
+	if (configureRecording.bitrate === false) {
 		if (defaultRecordingBitrate == false) {
-			videoKbps = session.recordDefault;
+			configureRecording.bitrate = session.recordDefault;
+			
 			if (session.recordLocal !== false) {
-				videoKbps = session.recordLocal;
+				configureRecording.bitrate = session.recordLocal;
+			} else if (lastConfiguredRecordingSetup!==false){
+				configureRecording = lastConfiguredRecordingSetup;
+			}
+			
+			if (session.pcm){
+				configureRecording.usePCM = true;
 			}
 
 			if (!recordingBitratePromise) {
 				window.focus();
-				recordingBitratePromise = promptAlt(getTranslation("press-ok-to-record"), false, false, videoKbps);
+				recordingBitratePromise = promptRecordingOptions(getTranslation("press-ok-to-record"), false, configureRecording);
 			}
-			videoKbps = await recordingBitratePromise;
-			log("videoKbps: " + videoKbps + ", UUID:" + UUID);
-			if (videoKbps === null) {
+			configureRecording = await recordingBitratePromise;
+			if (configureRecording === null) {
 				//target.style.backgroundColor = null;
 				//target.innerHTML = '<i class="las la-circle"></i><span data-translate="record"> record local</span>';
 				updateLocalRecordButton(UUID, -1);
@@ -39434,33 +40107,29 @@ async function recordVideo(target, event = null, videoKbps = false) {
 				defaultRecordingBitrate = null;
 				return;
 			}
-			videoKbps = parseInt(videoKbps);
-			defaultRecordingBitrate = videoKbps;
+			
+			defaultRecordingBitrate = configureRecording;
+			lastConfiguredRecordingSetup = configureRecording;
 		} else {
-			videoKbps = defaultRecordingBitrate;
+			configureRecording = defaultRecordingBitrate;
 		}
 	}
 
-	if (videoKbps <= 0) {
-		audioKbps = videoKbps * -1;
-		videoKbps = false;
+	if (configureRecording.audioOnly) {
 		if (session.audiobitrate === false) {
-			if (audioKbps > 0 && audioKbps >= 128) {
-				session.requestAudioRateLimit(128, UUID); // no point going higher
-			} else if (audioKbps == 0) {
-				session.requestAudioRateLimit(session.audiobitratePRO, UUID); // PCM
+			if (configureRecording.usePCM) {
+				session.requestAudioRateLimit(session.audiobitratePRO || 128, UUID); // PCM
 			} else {
-				session.requestAudioRateLimit(parseInt(audioKbps), UUID); // exact? sure. why not.
+				session.requestAudioRateLimit(configureRecording.bitrate || 32, UUID); // exact? sure. why not.
 			}
 		}
-	} else if (videoKbps < 50) {
-		// this just makes sure you can't set 0 on the record bitrate.
-		videoKbps = 50;
-		session.requestRateLimit(parseInt(videoKbps * 0.8), UUID); // 3200kbps transfer bitrate. Less than the recording bitrate, to avoid waste.
 	} else {
-		session.requestRateLimit(parseInt(videoKbps * 0.8), UUID); // 3200kbps transfer bitrate. Less than the recording bitrate, to avoid waste.
+		if (configureRecording.bitrate < 50) {
+			configureRecording.bitrate = 50;
+		}
+		session.requestRateLimit(configureRecording.bitrate, UUID); // 3200kbps transfer bitrate. Less than the recording bitrate, to avoid waste.
 
-		if (videoKbps > 4000) {
+		if (configureRecording.bitrate > 4000) {
 			if (session.audiobitrate === false) {
 				if (session.pcm) {
 					session.requestAudioRateLimit(session.audiobitratePRO, UUID);
@@ -39468,7 +40137,7 @@ async function recordVideo(target, event = null, videoKbps = false) {
 					session.requestAudioRateLimit(128, UUID);
 				}
 			}
-		} else if (videoKbps > 2500) {
+		} else if (configureRecording.bitrate > 2500) {
 			if (session.audiobitrate === false) {
 				if (session.pcm) {
 					session.requestAudioRateLimit(session.audiobitratePRO, UUID);
@@ -39478,6 +40147,8 @@ async function recordVideo(target, event = null, videoKbps = false) {
 			}
 		}
 	}
+	
+	//
 
 	var timestamp = Date.now();
 	var filename = "";
@@ -39529,7 +40200,7 @@ async function recordVideo(target, event = null, videoKbps = false) {
 		updateLocalRecordButton(UUID, -2);
 		try {
 			if (video.recorder && video.recorder.mediaRecorder && video.recorder.mediaRecorder.stop) {
-				if (video.recorder.mediaRecorder.state !== "inactive") {
+				if (video.recorder.mediaRecorder.state !== "inactive" || video.recorder.mediaRecorder.state === "recording") {
 					video.recorder.mediaRecorder.stop();
 				}
 			}
@@ -39589,7 +40260,7 @@ async function recordVideo(target, event = null, videoKbps = false) {
 
 	let options = {};
 
-	if (videoKbps) {
+	if (!configureRecording.audioOnly) {
 		var tryCodec = session.recordingVideoCodec || ""; // Simplified condition to assign tryCodec
 
 		if (tryCodec && MediaRecorder.isTypeSupported("video/webm;codecs=" + tryCodec)) {
@@ -39616,16 +40287,16 @@ async function recordVideo(target, event = null, videoKbps = false) {
 		}
 
 		// Simplified bitrate settings
-		options.videoBitsPerSecond = parseInt(videoKbps * 1024);
-		if (videoKbps < 1000) {
+		options.videoBitsPerSecond = parseInt(configureRecording.bitrate * 1024);
+		if (configureRecording.bitrate < 1000) {
 			options.audioBitsPerSecond = parseInt(100 * 1024);
-		} else if (videoKbps < 6000) {
+		} else if (configureRecording.bitrate < 6000) {
 			options.audioBitsPerSecond = parseInt(130 * 1024);
-		} else if (videoKbps < 20000) {
+		} else if (configureRecording.bitrate < 20000) {
 			options.audioBitsPerSecond = parseInt(256 * 1024);
 		} else {
-			// If videoKbps is >= 20000, use bitsPerSecond for total bitrate
-			options.bitsPerSecond = parseInt(videoKbps * 1024);
+			// If configureRecording.bitrate is >= 20000, use bitsPerSecond for total bitrate
+			options.bitsPerSecond = parseInt(configureRecording.bitrate * 1024);
 		}
 
 		if (iOS && options.mimeType) {
@@ -39642,12 +40313,12 @@ async function recordVideo(target, event = null, videoKbps = false) {
 		//}
 	} else {
 		options.mimeType = "audio/webm";
-		if (audioKbps == 0) {
+		if (configureRecording.usePCM) {
 			if (MediaRecorder.isTypeSupported("audio/webm;codecs=pcm")) {
 				options.mimeType = "audio/webm;codecs=pcm";
 			}
 		} else {
-			options.bitsPerSecond = parseInt(audioKbps * 1024);
+			options.bitsPerSecond = parseInt(configureRecording.bitrate * 1024);
 		}
 		var stream = createMediaStream();
 		video.srcObject.getAudioTracks().forEach(track => {
@@ -39660,7 +40331,6 @@ async function recordVideo(target, event = null, videoKbps = false) {
 				filext = ".mp4";
 			}
 		}
-
 		video.recorder.mediaRecorder = new MediaRecorder(stream, options);
 
 		//if (session.dbx){
@@ -40183,14 +40853,22 @@ function PCM16(stream) {
 }
 //// END OF PCM 16 SAVING CODE
 
-async function recordLocalVideo(action = null, videoKbps = false, remote = false, altUUID = false) {
+async function recordLocalVideo(action = null, configureRecording = false, remote = false, altUUID = false) {
 	// event.currentTarget,this.parentNode.parentNode.dataset.UUID
 
 	if (session.record === false) {
 		warnlog("recordings are disabled by decree of thy host magistrate");
 	}
-
-	var audioKbps = false;
+	log("original",configureRecording);
+	if (typeof configureRecording !== "object"){
+		let bitrate = configureRecording!==false ? configureRecording : (session.recordLocal !== false ? session.recordLocal : session.recordDefault);
+		configureRecording = {
+			bitrate: bitrate,
+			usePCM: (bitrate===0 || session.pcm) ? true:false,
+			audioOnly: (bitrate!==false && bitrate<=0) ? true:false
+		};
+	}
+	
 	if (remote) {
 		var video = remote;
 		if (remote.id === "videosource" || remote.id === "screensharesource") {
@@ -40294,26 +40972,17 @@ async function recordLocalVideo(action = null, videoKbps = false, remote = false
 
 	video.recorder = {};
 
-	if (videoKbps === false) {
-		if (session.recordLocal !== false) {
-			videoKbps = session.recordLocal;
-		} else {
-			videoKbps = 6000;
-		}
-	}
 
-	if (videoKbps <= 0) {
-		audioKbps = videoKbps * -1;
-		videoKbps = false;
-	} else if (videoKbps < 50) {
-		// this just makes sure you can't set 0 on the record bitrate.
-		videoKbps = 50;
+	if (!configureRecording.audioOnly && configureRecording.bitrate<50){
+		configureRecording.bitrate = 50;
 	}
 
 	if (typeof video.srcObject === "undefined" || !video.srcObject) {
 		errorlog("video.srcObject undefined");
 		return;
 	}
+	
+	log(configureRecording);
 
 	var timestamp = Date.now();
 	var filename = "";
@@ -40409,7 +41078,7 @@ async function recordLocalVideo(action = null, videoKbps = false, remote = false
 		// video.recording = false;
 
 		setTimeout(
-			(videoKbps, altUUID, video) => {
+			(configureRecording, altUUID, video) => {
 				try {
 					video.recorder.writer.close();
 				} catch (e) {
@@ -40461,18 +41130,18 @@ async function recordLocalVideo(action = null, videoKbps = false, remote = false
 				if (!remote) {
 					if (restart) {
 						setTimeout(
-							function (videoKbps, altUUID) {
-								recordLocalVideo("start", videoKbps, false, altUUID);
+							function (configureRecording, altUUID) {
+								recordLocalVideo("start", configureRecording, false, altUUID);
 							},
 							0,
-							videoKbps,
+							configureRecording,
 							altUUID
 						);
 					}
 				}
 			},
 			500,
-			videoKbps,
+			configureRecording,
 			altUUID,
 			video
 		);
@@ -40504,8 +41173,8 @@ async function recordLocalVideo(action = null, videoKbps = false, remote = false
 	let filext = ".webm";
 	log("setting up options");
 
-	if (videoKbps) {
-		log("videoKbps: " + videoKbps);
+	if (!configureRecording.audioOnly) {
+		log("videoKbps: " + configureRecording.bitrate);
 		var tryCodec = session.recordingVideoCodec || ""; // Simplified condition to assign tryCodec
 
 		if (tryCodec && MediaRecorder.isTypeSupported("video/webm;codecs=" + tryCodec)) {
@@ -40514,7 +41183,7 @@ async function recordLocalVideo(action = null, videoKbps = false, remote = false
 			}
 			options.mimeType = "video/webm;codecs=" + tryCodec;
 
-			if (session.pcm) {
+			if (configureRecording.usePCM) {
 				// Fixed the format of the MIME type string
 				var mimeTypeWithPCM = "video/x-matroska;codecs=" + tryCodec + ",pcm";
 				if (MediaRecorder.isTypeSupported(mimeTypeWithPCM)) {
@@ -40528,20 +41197,20 @@ async function recordLocalVideo(action = null, videoKbps = false, remote = false
 			if (tryCodec) {
 				warnlog("video/webm;codecs=" + tryCodec + " - is not supported");
 			}
-			options.mimeType = session.pcm && MediaRecorder.isTypeSupported("video/webm;codecs=pcm") ? "video/webm;codecs=pcm" : "video/webm";
+			options.mimeType = configureRecording.usePCM && MediaRecorder.isTypeSupported("video/webm;codecs=pcm") ? "video/webm;codecs=pcm" : "video/webm";
 		}
 
 		// Simplified bitrate settings
-		options.videoBitsPerSecond = parseInt(videoKbps * 1024);
-		if (videoKbps < 1000) {
+		options.videoBitsPerSecond = parseInt(configureRecording.bitrate * 1024);
+		if (configureRecording.bitrate < 1000) {
 			options.audioBitsPerSecond = parseInt(100 * 1024);
-		} else if (videoKbps < 6000) {
+		} else if (configureRecording.bitrate < 6000) {
 			options.audioBitsPerSecond = parseInt(130 * 1024);
-		} else if (videoKbps < 20000) {
+		} else if (configureRecording.bitrate < 20000) {
 			options.audioBitsPerSecond = parseInt(256 * 1024);
 		} else {
-			// If videoKbps is >= 20000, use bitsPerSecond for total bitrate
-			options.bitsPerSecond = parseInt(videoKbps * 1024);
+			// If configureRecording.bitrate is >= 20000, use bitsPerSecond for total bitrate
+			options.bitsPerSecond = parseInt(configureRecording.bitrate * 1024);
 		}
 
 		if (iOS && options.mimeType) {
@@ -40553,7 +41222,7 @@ async function recordLocalVideo(action = null, videoKbps = false, remote = false
 
 		video.recorder.mediaRecorder = new MediaRecorder(video.srcObject, options);
 		try {
-			console.log(options);
+			log(options);
 			video.recorder.mediaRecorder = new MediaRecorder(video.srcObject, options);
 		} catch (e) {
 			warnlog(e);
@@ -40611,12 +41280,12 @@ async function recordLocalVideo(action = null, videoKbps = false, remote = false
 	} else {
 		log("Audio only?");
 		options.mimeType = "audio/webm";
-		if (audioKbps == 0) {
+		if (configureRecording.usePCM) {
 			if (MediaRecorder.isTypeSupported("audio/webm;codecs=pcm")) {
 				options.mimeType = "audio/webm;codecs=pcm";
 			}
 		} else {
-			options.bitsPerSecond = parseInt(audioKbps * 1024);
+			options.bitsPerSecond = parseInt(configureRecording.bitrate * 1024);
 		}
 		var stream = createMediaStream();
 		var audioTrack = false;
@@ -40725,67 +41394,88 @@ async function recordLocalVideo(action = null, videoKbps = false, remote = false
 		}
 	}
 	log(options);
+	
+	function createLock() {
+		let isLocked = false;
+		let queue = Promise.resolve();
+		
+		return {
+			acquire: async () => {
+				const release = () => { isLocked = false; };
+				while (isLocked) {
+					await new Promise(resolve => setTimeout(resolve, 10));
+				}
+				isLocked = true;
+				return release;
+			}
+		};
+	}
 
 	var chunkQueue = [];
-	function handleDataAvailable(event, process = true) {
+	async function handleDataAvailable(event, process = true) {
+		if (!video.recorder.writerLock) {
+			video.recorder.writerLock = createLock();
+		}
+
+		// Handle existing queue first
 		while (chunkQueue.length && process) {
-			ret = handleDataAvailable(chunkQueue.shift(), false);
+			const ret = await handleDataAvailable(chunkQueue.shift(), false);
 			if (ret === false) {
-				return; // cancel.
+				return;
 			}
 		}
 
 		if (event.data && event.data.size > 0) {
 			try {
-				if (video && video.recorder && video.recorder.writer) {
-					// video.recorder.closing
-					try {
-						if (video.recorder.writer._ownerWritableStream._state === "writable") {
-							video.recorder.writer.write(event.data);
-						} else {
-							throw new Error("Writer not open");
+				const release = await video.recorder.writerLock.acquire();
+				try {
+					if (video?.recorder?.writer?._ownerWritableStream?._state === "writable") {
+						await video.recorder.writer.write(event.data);
+					} else {
+						throw new Error("Writer not open");
+					}
+				} catch (e) {
+					if (process === true) {
+						chunkQueue.push(event);
+					} else {
+						chunkQueue.unshift(event);
+						release();
+						return false;
+					}
+				} finally {
+					release();
+				}
+
+				// Rest of the existing code for messaging and cloud uploads
+				if (session.directorList.length) {
+					if (video.recording) {
+						var msg = {};
+						if (altUUID) {
+							msg.alt = true;
 						}
-					} catch (e) {
-						if (process === true) {
-							chunkQueue.push(event);
-						} else {
-							chunkQueue.unshift(event);
-							return false;
+						msg.recorder = parseInt((Date.now() - timestamp) / 1000) || 0;
+						for (var i = 0; i < session.directorList.length; i++) {
+							msg.UUID = session.directorList[i];
+							session.sendMessage(msg, msg.UUID);
 						}
 					}
-				} else if (process === true) {
-					chunkQueue.push(event);
-				} else {
-					chunkQueue.unshift(event);
-					return false;
+				}
+
+				if (session.dbx && video.dropbox && video.dropbox[filename]) {
+					video.dropbox[filename](event.data);
+				}
+				if (video.gdrive && video.gdrive[filename]) {
+					video.gdrive[filename].addChunk(event.data);
 				}
 			} catch (e) {
 				errorlog(e);
 			}
-			if (session.directorList.length) {
-				if (video.recording) {
-					var msg = {};
-					if (altUUID) {
-						msg.alt = true;
-					}
-					msg.recorder = parseInt((Date.now() - timestamp) / 1000) || 0;
-					for (var i = 0; i < session.directorList.length; i++) {
-						msg.UUID = session.directorList[i];
-						session.sendMessage(msg, msg.UUID);
-					}
-				}
-			}
-
-			if (session.dbx && video.dropbox && video.dropbox[filename]) {
-				video.dropbox[filename](event.data);
-			}
-			if (video.gdrive && video.gdrive[filename]) {
-				video.gdrive[filename].addChunk(event.data); //  video.gdrive[filename].addChunk
-			}
 		}
 	}
 
-	video.recorder.mediaRecorder.ondataavailable = handleDataAvailable;
+	video.recorder.mediaRecorder.ondataavailable = (event) => {
+		handleDataAvailable(event).catch(e => errorlog(e));
+	};
 
 	video.recorder.mediaRecorder.onerror = function (event) {
 		errorlog(event);
@@ -40850,7 +41540,7 @@ async function recordLocalVideo(action = null, videoKbps = false, remote = false
 		
 		video.recorder.mediaRecorder.start(1000); // 100ms chunks
 		
-		console.log("started recording");
+		log("started recording");
 
 		pokeIframeAPI("recording-started");
 
@@ -46714,7 +47404,7 @@ function playbackMIDI(msg, unsafe = false, UUID = null) {
         return;
     }
     
-    console.log("play out");
+    log("play out");
 
     if (session.midiDelay && "t" in msg) {
         const timeDelay = session.midiDelay - (Date.now() - msg.t);

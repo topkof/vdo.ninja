@@ -2707,8 +2707,9 @@ async function main() {
 		// the streams we want to view; if set, but let blank, we will request no streams to watch.
 		session.view = urlParams.get("streamid") || urlParams.get("view") || urlParams.get("v") || urlParams.get("pull") || null; // this value can be comma seperated for multiple streams to pull
 
-		getById("headphonesDiv2").style.display = "inline-block";
-		getById("headphonesDiv").style.display = "inline-block";
+		getById("headphonesDiv2").classList.remove("hidden");
+		getById("headphonesDiv").classList.remove("hidden");
+		
 		getById("addPasswordBasic").style.display = "none";
 
 		if (session.view == null) {
@@ -3344,8 +3345,8 @@ async function main() {
 			session.audioDevice = session.audioDevice.split(",");
 		}
 
-		getById("headphonesDiv").style.display = "none";
-		getById("headphonesDiv2").style.display = "none";
+		getById("headphonesDiv").classList.add("hidden");
+		getById("headphonesDiv2").classList.add("hidden");
 
 		if (typeof session.audioDevice !== "object" && !urlParams.has("ado")) {
 			getById("audioMenu").style.display = "none";
@@ -4228,8 +4229,8 @@ async function main() {
 			} catch (e) {}
 		}
 
-		getById("headphonesDiv").style.display = "none";
-		getById("headphonesDiv2").style.display = "none";
+		getById("headphonesDiv").classList.add("hidden");
+		getById("headphonesDiv2").classList.add("hidden");
 	} else if (session.sink) {
 		if (session.sink == "default") {
 			session.sink = false;
@@ -5702,8 +5703,8 @@ async function main() {
 		}
 
 		if (session.audioDevice === false && session.outputDevice === false) {
-			getById("headphonesDiv2").style.display = "inline-block";
-			getById("headphonesDiv").style.display = "inline-block";
+			getById("headphonesDiv2").classList.remove("hidden");
+			getById("headphonesDiv").classList.remove("hidden");
 		}
 		getById("addPasswordBasic").style.display = "none";
 
@@ -7602,38 +7603,6 @@ async function main() {
 		}
 	});
 	
-	
-	let wakeLockObject = null;
-	async function acquireWakeLock() {
-	  if ('wakeLock' in navigator) {
-		try {
-		  wakeLockObject = await navigator.wakeLock.request('screen');
-		  log('Wake Lock is active');
-		} catch (err) {
-		  errorlog(err);
-		}
-	  } else {
-		warnlog('Wake Lock API is not supported in this browser');
-	  }
-	}
-	function handleVisibilityChangeWakeLock() {
-	  if (wakeLockObject !== null && document.visibilityState === 'visible') {
-		acquireWakeLock();
-	  }
-	}
-	function releaseWakeLock() {
-	  if (wakeLockObject) {
-		wakeLockObject.release()
-		  .then(() => {
-			wakeLockObject = null;
-			log('Wake Lock is released');
-		  })
-		  .catch((err) => {
-			errorlog(err);
-		  });
-	  }
-	}
-
 	document.addEventListener("DOMContentLoaded", function () {
 		var lazyVideos = [].slice.call(document.querySelectorAll("video.lazy"));
 
