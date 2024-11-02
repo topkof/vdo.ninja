@@ -2988,6 +2988,20 @@ function toggleOBSControls() {
 	}
 }
 
+function toggleOBSControlsLock(ele, disable = null) {
+    const element = getById("remoteOBSControlContents");
+    
+    // If disable is not specified, toggle based on current state
+    // Otherwise, use the provided value
+    const shouldDisable = disable !== null ? disable : 
+                         element.style.pointerEvents !== 'none';
+    
+    element.style.pointerEvents = shouldDisable ? 'none' : 'auto';
+    element.style.opacity = shouldDisable ? '0.6' : '1';
+    ele.textContent = shouldDisable ? '🔒' : '🔓';
+	
+    return shouldDisable; // returns the new state
+}
 function requestOBSAction(ele) {
 	if (session.disableOBS) {
 		return false;
@@ -30554,6 +30568,16 @@ async function publishScreen2(constraints, audioList = [], audio = true, overrid
 
 			session.seeding = true;
 			session.seedStream();
+			
+			if (session.whipOutput){ // was handling these functions within session.seedStream(); doing it here now instead. 8-08-2024
+				whipOut();
+			}
+			if (session.meshcast){
+				await meshcast();
+			}
+			if (session.whepHost){
+				whepOut();
+			}
 
 			//pokeIframeAPI('started-screenshare'); // depreciated
 			pokeIframeAPI("screen-share-state", true, null, session.streamID); // (action, value = null, UUID = null, SID=null)
@@ -31229,7 +31253,7 @@ session.publishFile = function (ele, event) {
 		}
 	};
 
-	v.onloadeddata = () => {
+	v.onloadeddata = async () => {
 		
 		session.mediafileShare = true;
 		getById("mainmenu").remove();
@@ -31306,6 +31330,16 @@ session.publishFile = function (ele, event) {
 		session.updateLocalStatsInterval = setInterval(function () {
 			updateLocalStats();
 		}, session.statsInterval);
+		
+		if (session.whipOutput){ // was handling these functions within session.seedStream(); doing it here now instead. 8-08-2024
+			whipOut();
+		}
+		if (session.meshcast){
+			await meshcast();
+		}
+		if (session.whepHost){
+			whepOut();
+		}
 
 		session.seeding = true;
 

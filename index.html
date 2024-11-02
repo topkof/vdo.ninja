@@ -492,12 +492,12 @@
 							</form>
 						</div>
 					</center>
-					<div id="audioMenu" class="form-group multiselect" alt="tip: Hold CTRL (command) to select Multiple" title="tip: Hold CTRL (command) to select Multiple" aria-hidden="true">
+					<div id="audioMenu" class="form-group multiselect" alt="tip: Hold CTRL (command) to select Multiple" title="tip: Hold CTRL (command) to select Multiple">
 						<span class='gear_microphone hidden'>
 							<input type="checkbox" id='micStereoMonoInput' alt="Mono microphone audio"  onchange="toggleMonoStereoMic(this);">Mono
 						</span>
-						<a id="multiselect-trigger" class="form-control multiselect-trigger" >
-							<div  class="title">
+						<a id="multiselect-trigger" class="form-control multiselect-trigger" data-state="1">
+							<div class="title">
 								<i class="las la-microphone-alt"></i><span data-translate="select-audio-source"> Audio Source(s) </span>
 								<i id='chevarrow1' class="chevron bottom" aria-hidden="true"></i>
 								<div class="meter" id="meter1"></div><div class="meter2" id="meter2"></div>
@@ -993,7 +993,7 @@
 					Loading ...
 				</div>
 			</div>
-			<div id="container-11" class="column columnfade pointer rounded card hidden" style="overflow: hidden;" onclick="window.location = 'https://github.vdo.ninja';">
+			<div id="container-19" class="column columnfade pointer rounded card hidden" style="overflow: hidden;" onclick="window.location = 'https://github.vdo.ninja';">
 				<h2><span data-translate="get-the-source-code">Source Code</span></h2>
 				<i style="margin-top:30px;font-size:600%;overflow:hidden;" class="largeDarkIcon las la-code-branch"></i>
 			</div>
@@ -1079,7 +1079,7 @@
 								<span style="color:#daad09;">Welcome to VDO Ninja! We've rebranded!  Nothing else is changing and we're staying 100% free.</span>
 							</h4>
 							<br />
-							🎃 Site last updated on October 15th. You can also still access the previous version, which <a href="https://vdo.ninja/v25/">is hosted here</a>. Development <a target="_blank" title="Open a page with recent VDO.Ninja development and feature updates" href="https://updates.vdo.ninja/">updates are here.</a>
+							🎃 Last major update on October 15th. You can also still access the previous version, which <a href="https://vdo.ninja/v25/">is hosted here</a>. Development <a target="_blank" title="Open a page with recent VDO.Ninja development and feature updates" href="https://updates.vdo.ninja/">updates are here.</a>
 							<br />
 							<br />
 							<h3>
@@ -2543,25 +2543,26 @@
 		
 		<div id="remoteOBSControl" class="customModelPopup" style="display:none;">
 			<div class="promptModalInner">
-				<span class='modalClose' onclick="toggleOBSControls();">×</span>
-				<span></span>
-				<h3 data-translate="remote-control-obs-menu">Remote Controller for OBS Studio</h3><br />
-				<div id="obsControlHelp" class="hidden" style="margin: 10px 0;display:block" >
-					No remote controllable instances of OBS Studio were found
-				</div>
-				<div id="obsControlButtons" style="margin: 10px 0;display:block" >
-				</div>
-				<div id="obsSceneNames" style="margin: 10px 0;display:block" >
-				</div>
-				<div id="obsRemotePassword" class="hidden" style="margin: 10px 0;display:block;" >
-					<span style="font-size:117%"><i class="las la-key" style="margin: 10px;"></i>Remote OBS passcode:</span>
-					<input style="margin:0 10px;display:inline-block;padding: 8px 10px 6px 10px;" placeholder="Enter the remote OBS password here" />
-				</div>
-				<small style="margin: 20px 0 0 0;display:block;" >
-					See the <a href="https://docs.vdo.ninja/advanced-settings/upcoming-parameters/and-obs" style="cursor:pointer;" target="_blank">documentation</a> for help on using the remote OBS controller
-				</small>
-				<div id="debugRemoteOBSControl" class="hidden">
-				</div>
+				<span class='modalClose' style="right:33px;" onclick="toggleOBSControlsLock(this);">🔓</span><span class='modalClose' onclick="toggleOBSControls();">×</span>
+				<span id="remoteOBSControlContents">
+					<h3 data-translate="remote-control-obs-menu">Remote Controller for OBS Studio</h3><br />
+					<div id="obsControlHelp" class="hidden" style="margin: 10px 0;display:block" >
+						No remote controllable instances of OBS Studio were found
+					</div>
+					<div id="obsControlButtons" style="margin: 10px 0;display:block" >
+					</div>
+					<div id="obsSceneNames" style="margin: 10px 0;display:block" >
+					</div>
+					<div id="obsRemotePassword" class="hidden" style="margin: 10px 0;display:block;" >
+						<span style="font-size:117%"><i class="las la-key" style="margin: 10px;"></i>Remote OBS passcode:</span>
+						<input style="margin:0 10px;display:inline-block;padding: 8px 10px 6px 10px;" placeholder="Enter the remote OBS password here" />
+					</div>
+					<small style="margin: 20px 0 0 0;display:block;" >
+						See the <a href="https://docs.vdo.ninja/advanced-settings/upcoming-parameters/and-obs" style="cursor:pointer;" target="_blank">documentation</a> for help on using the remote OBS controller
+					</small>
+					<div id="debugRemoteOBSControl" class="hidden">
+					</div>
+				</span>
 			</div>
 		</div>
 		

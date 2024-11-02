@@ -5725,6 +5725,10 @@ async function main() {
 		getById("container-13").style.display = "none";
 		getById("container-14").style.display = "none";
 		getById("container-15").style.display = "none";
+		getById("container-16").style.display = "none";
+		getById("container-17").style.display = "none";
+		getById("container-18").style.display = "none";
+		getById("container-19").style.display = "none";
 		getById("mainmenu").style.alignSelf = "center";
 		getById("mainmenu").classList.add("mainmenuclass");
 		getById("header").style.alignSelf = "center";
