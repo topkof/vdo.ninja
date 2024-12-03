@@ -152,6 +152,16 @@ async function main() {
 		session.effect = null; // so the director can see the effects after a page refresh
 		getById("avatarDiv3").classList.remove("hidden"); // lets the director see the avatar option
 	}
+	
+	if (urlParams.has("feedbackbutton") || urlParams.has("fb")) {
+		getById("unmuteSelf").classList.remove("hidden"); // lets the director see the avatar option
+		//session.selfVolume = urlParams.get("fb") || null;
+		session.selfVolume = urlParams.get("feedbackbutton") || urlParams.get("fb") || null;
+		if (session.selfVolume){
+			getById("unmuteSelf").setAttribute("title", `Hear yourself at ${parseFloat(session.selfVolume)}% volume`);
+			getById("unmuteSelf").setAttribute("alt", `Hear yourself at ${parseFloat(session.selfVolume)}% volume`);
+		}
+	}
 
 	if (urlParams.has("controls") || urlParams.has("videocontrols")) {
 		session.showControls = true; // show the video control bar
@@ -408,7 +418,7 @@ async function main() {
 
 	if (urlParams.has("background") || urlParams.has("appbg")) {
 		// URL or data:base64 image.  Use &chroma if you want to use a color instead of image.
-		let background = urlParams.get("background") || urlParams.get("appbg") || false;
+		let background = urlParams.get("background") || urlParams.get("appbg") || "./media/logo_cropped.png";
 		if (background) {
 			try {
 				background = decodeURIComponent(background);
@@ -2697,8 +2707,9 @@ async function main() {
 		// the streams we want to view; if set, but let blank, we will request no streams to watch.
 		session.view = urlParams.get("streamid") || urlParams.get("view") || urlParams.get("v") || urlParams.get("pull") || null; // this value can be comma seperated for multiple streams to pull
 
-		getById("headphonesDiv2").style.display = "inline-block";
-		getById("headphonesDiv").style.display = "inline-block";
+		getById("headphonesDiv2").classList.remove("hidden");
+		getById("headphonesDiv").classList.remove("hidden");
+		
 		getById("addPasswordBasic").style.display = "none";
 
 		if (session.view == null) {
@@ -3334,8 +3345,8 @@ async function main() {
 			session.audioDevice = session.audioDevice.split(",");
 		}
 
-		getById("headphonesDiv").style.display = "none";
-		getById("headphonesDiv2").style.display = "none";
+		getById("headphonesDiv").classList.add("hidden");
+		getById("headphonesDiv2").classList.add("hidden");
 
 		if (typeof session.audioDevice !== "object" && !urlParams.has("ado")) {
 			getById("audioMenu").style.display = "none";
@@ -4218,8 +4229,8 @@ async function main() {
 			} catch (e) {}
 		}
 
-		getById("headphonesDiv").style.display = "none";
-		getById("headphonesDiv2").style.display = "none";
+		getById("headphonesDiv").classList.add("hidden");
+		getById("headphonesDiv2").classList.add("hidden");
 	} else if (session.sink) {
 		if (session.sink == "default") {
 			session.sink = false;
@@ -5692,8 +5703,8 @@ async function main() {
 		}
 
 		if (session.audioDevice === false && session.outputDevice === false) {
-			getById("headphonesDiv2").style.display = "inline-block";
-			getById("headphonesDiv").style.display = "inline-block";
+			getById("headphonesDiv2").classList.remove("hidden");
+			getById("headphonesDiv").classList.remove("hidden");
 		}
 		getById("addPasswordBasic").style.display = "none";
 
@@ -5714,6 +5725,10 @@ async function main() {
 		getById("container-13").style.display = "none";
 		getById("container-14").style.display = "none";
 		getById("container-15").style.display = "none";
+		getById("container-16").style.display = "none";
+		getById("container-17").style.display = "none";
+		getById("container-18").style.display = "none";
+		getById("container-19").style.display = "none";
 		getById("mainmenu").style.alignSelf = "center";
 		getById("mainmenu").classList.add("mainmenuclass");
 		getById("header").style.alignSelf = "center";
@@ -5780,6 +5795,13 @@ async function main() {
 			} else if (session.chatbutton === false) {
 				getById("chatbutton").classList.add("hidden");
 			}
+			
+			if (session.hangupbutton === true) {
+				getById("controlButtons").classList.remove("hidden");
+				getById("hangupbutton").classList.remove("hidden");
+				getById("hangupbutton").className = "float";
+			}
+			
 		} else if (session.permaid === null && session.roomid == "") {
 			if (!session.cleanOutput) {
 				//	getById("head3").classList.remove('hidden');
@@ -5865,6 +5887,12 @@ async function main() {
 			getById("controlButtons").classList.remove("hidden");
 		} else if (session.chatbutton === false) {
 			getById("chatbutton").classList.add("hidden");
+		}
+		
+		if (session.hangupbutton === true) {
+			getById("controlButtons").classList.remove("hidden");
+			getById("hangupbutton").classList.remove("hidden");
+			getById("hangupbutton").className = "float";
 		}
 	}
 
@@ -7579,38 +7607,6 @@ async function main() {
 		}
 	});
 	
-	
-	let wakeLockObject = null;
-	async function acquireWakeLock() {
-	  if ('wakeLock' in navigator) {
-		try {
-		  wakeLockObject = await navigator.wakeLock.request('screen');
-		  log('Wake Lock is active');
-		} catch (err) {
-		  errorlog(err);
-		}
-	  } else {
-		warnlog('Wake Lock API is not supported in this browser');
-	  }
-	}
-	function handleVisibilityChangeWakeLock() {
-	  if (wakeLockObject !== null && document.visibilityState === 'visible') {
-		acquireWakeLock();
-	  }
-	}
-	function releaseWakeLock() {
-	  if (wakeLockObject) {
-		wakeLockObject.release()
-		  .then(() => {
-			wakeLockObject = null;
-			log('Wake Lock is released');
-		  })
-		  .catch((err) => {
-			errorlog(err);
-		  });
-	  }
-	}
-
 	document.addEventListener("DOMContentLoaded", function () {
 		var lazyVideos = [].slice.call(document.querySelectorAll("video.lazy"));
 

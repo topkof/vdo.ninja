@@ -77,12 +77,7 @@
 		
 		<meta name="msapplication-TileColor" content="#da532c" />
 		<meta name="theme-color" content="#0f131d" />
-		
-		<link rel="stylesheet" href="./css/variables.css?ver=3" />
-		<!-- If a user is using an old custom main.css, their custom variables should override the defaults variables this way. i think. -->
-		<link rel="stylesheet" href="./css/main.css?ver=395" />
-		<link rel="stylesheet" href="./css/icons.css?ver=2" />
-		<link rel="stylesheet" href="./css/animations.css" />
+		<link rel="stylesheet" href="./main.css?ver=398" />
 		<script type="text/javascript" crossorigin="anonymous" src="./thirdparty/adapter.js"></script>
 		
 		<link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon" />
@@ -207,7 +202,9 @@
 		<div id="controlButtons" class="hidden">
 			<div class="controlPositioning">
                 <div id="subControlButtons">
-                
+					<div id="unmuteSelf" title="Hear yourself at 50% volume" alt="Hear yourself at 50% volume" aria-label="Hear Yourself" onmousedown="event.preventDefault(); event.stopPropagation();"  onclick="toggleDirectFeedback()"  tabindex="2" role="button" aria-pressed="false" onkeyup="enterPressedClick(event,this);"  class="hidden float" style="cursor: pointer;" >
+                        <i id="unmuteSelftoggle" class="toggleSize las la-podcast"></i>
+                    </div>
 					<div id="mediafileshare" onmousedown="event.preventDefault(); event.stopPropagation();"  title="Stream a media file" aria-label="Stream a media file" alt="Stream a media file to others" onclick="getById('fileselector2').click();" tabindex="2" role="button" aria-pressed="false" onkeyup="enterPressedClick(event,this);"  class="float hidden" style="cursor: pointer;">
                         <i id="mediafilesharetoggle" onmousedown="event.preventDefault(); event.stopPropagation();"  class="toggleSize las la-file-video"></i>
 						<input id="fileselector2" class="hidden" onchange="session.changePublishFile(this,event);" type="file" accept="video/*,audio/*" alt="Hold CTRL (or CMD) to select multiple files" title="Hold CTRL (or CMD) to select multiple files" multiple/>
@@ -541,12 +538,12 @@
 							</form>
 						</div>
 					</center>
-					<div id="audioMenu" class="form-group multiselect" alt="tip: Hold CTRL (command) to select Multiple" title="tip: Hold CTRL (command) to select Multiple" aria-hidden="true">
+					<div id="audioMenu" class="form-group multiselect" alt="tip: Hold CTRL (command) to select Multiple" title="tip: Hold CTRL (command) to select Multiple">
 						<span class='gear_microphone hidden'>
 							<input type="checkbox" id='micStereoMonoInput' alt="Mono microphone audio"  onchange="toggleMonoStereoMic(this);">Mono
 						</span>
-						<a id="multiselect-trigger" class="form-control multiselect-trigger" >
-							<div  class="title">
+						<a id="multiselect-trigger" class="form-control multiselect-trigger" data-state="1">
+							<div class="title">
 								<i class="las la-microphone-alt"></i><span data-translate="select-audio-source"> Audio Source(s) </span>
 								<i id='chevarrow1' class="chevron bottom" aria-hidden="true"></i>
 								<div class="meter" id="meter1"></div><div class="meter2" id="meter2"></div>
@@ -566,7 +563,7 @@
 						</div>
 					</div>
 					<br style="line-height: 0;" />
-					<div id="headphonesDiv" class="audioMenu" aria-hidden="true">
+					<div id="headphonesDiv" class="audioMenu hidden" aria-hidden="true">
 						<div class="title">
 							<i class="las la-headphones"></i><span data-translate="select-output-source"> Audio Output Destination</span><button onclick="playtone()" title="Play a sound out of the selected audio playback device" class="testtonebutton" type="button">Test</button>
 						</div>
@@ -681,16 +678,24 @@
 					</div>
 				</div>
 			</div>
-			<div id="container-2" title="Remote Screenshare into OBS" onkeyup="enterPressedClick(event,this);"  alt="Remote Screenshare into OBS"  tabindex="1" role="button" aria-pressed="false" class="column columnfade pointer rounded card" style=" overflow-y: auto;">
+			<div id="container-2" title="Remote Screenshare into OBS" onkeyup="enterPressedClick(event,this);"  alt="Remote Screenshare into OBS"  tabindex="1" role="button" aria-pressed="false" class="column columnfade pointer rounded card screenshareIcon" style=" overflow-y: auto;">
 				<h2 id="add_screen">
 					<span data-translate="remote-screenshare-obs">Remote Screenshare into OBS</span>
 				</h2>
 				<div class="container-inner">
-					<span>
-						<video id="screenshare" autoplay="true" muted="true" loop src="./media/screenshare.webm" class="lazy" style='background-image: unset;'></video>
-					</span>
-					<br />
-					<button class='gobutton' style="padding: 10px; font-size: 120%;animation: pulsate 2s ease-out infinite;" alt="clilck to select you screen to share" onclick="publishScreen()">
+					<div class="screenshare-icon">
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160">
+						  <rect x="40" y="20" width="160" height="100" rx="4" fill="none" stroke="#999" stroke-width="4"/>
+						  <rect x="50" y="30" width="140" height="80" fill="#666" rx="2"/>
+						  <path d="M100 120 L140 120 L150 140 L90 140 Z" fill="#999"/>
+						  <path d="M90 60 L150 60 M140 50 L150 60 L140 70" stroke="#fff" stroke-width="3" fill="none"/>
+						  <rect x="65" y="40" width="50" height="8" fill="#fff" opacity="0.6" rx="2"/>
+						  <rect x="65" y="55" width="110" height="4" fill="#fff" opacity="0.3" rx="1"/>
+						  <rect x="65" y="65" width="90" height="4" fill="#fff" opacity="0.3" rx="1"/>
+						  <rect x="65" y="75" width="100" height="4" fill="#fff" opacity="0.3" rx="1"/>
+						</svg>
+					</div>
+					<button class='gobutton mainScreenShareButton' class="mainScreenShareButton" alt="clilck to select you screen to share" onclick="publishScreen()">
 						<span data-translate="select-screen-to-share">SELECT SCREEN TO SHARE</span>
 					</button>
 					<span title="Change the capture resolution. This defines what the maximum resolution the video can be encoded at. A lower resolution will be smoother." id="gear_screen" style="display: inline-block; cursor: pointer;" onclick="toggle(document.getElementById('videoSettings2'));">
@@ -726,22 +731,19 @@
 						<i class="las la-exclamation-circle"></i>
 						<p><span data-translate="privacy-disabled">Privacy warning: The director will be able to remotely change your camera, microphone, and URL while this page is open, if you continue.</span></p>
 					</div>
-					<div id="audioScreenShare1">
-                        <div class="title">
-                            <i class="las la-microphone-alt"></i>
-                            <span data-translate="audio-sources">Audio Sources</span>
-                        </div>
-						<select id="audioSourceScreenshare" multiple  alt="tip: Hold CTRL (command) to select Multiple" title="tip: Hold CTRL (command) to select Multiple" onchange="requestAudioStream();">
-							<option value="screenshare" selected>
-								Screen Share Audio (default)
-							</option>
-							<option value="microphones">
-								Other Audio Sources
-							</option>
-						</select>
+					<div id="audioScreenShare1" class="audio-selector">
+						<div class="title">
+							<i class="las la-microphone-alt"></i>
+							<span>Additional Audio Sources</span>
+						</div>
+						<button id="showAudioDevices" class="audio-select-btn" onclick="requestAudioStream();">
+							Add Microphone Sources
+						</button>
+						<div id="audioDeviceList" class="audio-device-list" style="display: none;"></div>
+						<div id="audioSelectError" class="error-message" style="display: none;"></div>
 					</div>
 					<br />
-					<div id="headphonesDiv2">
+					<div id="headphonesDiv2" class="hidden">
                         <div class="title">
                             <i class="las la-headphones"></i>
                             <span data-translate="select-output-source"> Audio Output Destination: 
@@ -754,10 +756,18 @@
 							</option>
 						</select>
 					</div>
+					<br /><br />
+					<div class="info-box">
+						<h3><i class="las la-info-circle"></i> Things to Note</h3>
+						<ul>
+							<li>Screen audio selection will be handled by your browser's sharing dialog</li>
+							<li>Additional microphone sources can be added and will be mixed with your screen audio</li>
+							<li>Quality settings affect maximum capture resolution - lower settings may be smoother</li>
+							<li id="audioScreenCaptureDocs" data-translate="application-audio-capture">For application-specific audio capture, <a href='https://docs.vdo.ninja/audio' target="_blank">see here</a></li>
+							<li id="audioScreenCaptureDocs2" data-translate="1080p-screen-capture-guide">For achieving 1080p60 game-capture, <a href='https://docs.vdo.ninja/guides/how-to-screen-share-in-1080p' target="_blank">see here</a></li>
+						</ul>
+					</div>
 					<br />
-					<div id="audioScreenCaptureDocs" data-translate="application-audio-capture">For application-specific audio capture, <a href='https://docs.vdo.ninja/audio' target="_blank">see here</a></div>
-					<div id="audioScreenCaptureDocs2" data-translate="1080p-screen-capture-guide">For achieving 1080p60 game-capture, <a href='https://docs.vdo.ninja/guides/how-to-screen-share-in-1080p' target="_blank">see here</a></div>
-					
 				</div>
 				<div class="outer close" title="Go back">
 					<div class="inner">
@@ -960,7 +970,7 @@
 				</div>
 			</div>
 			
-			<div id="container-18" class="column columnfade pointer rounded card hidden" style="display:none! opacity:0; width:0; height:0; overflow-y: auto;">
+			<div id="container-18" class="column columnfade pointer rounded card hidden" style="display:none!important; opacity:0; width:0; height:0; overflow-y: auto;">
 				<h2><span data-translate="whip-in">Join Room via WHIP</span></h2>
 				<i style="margin-top:30px;font-size:560%;overflow:hidden;" class="largeDarkIcon las la-broadcast-tower"></i>
 				<div class="container-inner">
@@ -1029,7 +1039,7 @@
 					Loading ...
 				</div>
 			</div>
-			<div id="container-11" class="column columnfade pointer rounded card hidden" style="overflow: hidden;" onclick="window.location = 'https://github.vdo.ninja';">
+			<div id="container-19" class="column columnfade pointer rounded card hidden" style="overflow: hidden;" onclick="window.location = 'https://github.vdo.ninja';">
 				<h2><span data-translate="get-the-source-code">Source Code</span></h2>
 				<i style="margin-top:30px;font-size:600%;overflow:hidden;" class="largeDarkIcon las la-code-branch"></i>
 			</div>
@@ -1115,7 +1125,7 @@
 								<span style="color:#daad09;">Welcome to VDO Ninja! We've rebranded!  Nothing else is changing and we're staying 100% free.</span>
 							</h4>
 							<br />
-							🎃 Site last updated on October 15th. You can also still access the previous version, which <a href="https://vdo.ninja/v25/">is hosted here</a>. Development <a target="_blank" title="Open a page with recent VDO.Ninja development and feature updates" href="https://updates.vdo.ninja/">updates are here.</a>
+							🎃 Last major update on October 15th. You can also still access the previous version, which <a href="https://vdo.ninja/v25/">is hosted here</a>. Development <a target="_blank" title="Open a page with recent VDO.Ninja development and feature updates" href="https://updates.vdo.ninja/">updates are here.</a>
 							<br />
 							<br />
 							<h3>
@@ -1653,6 +1663,12 @@
                     <button class="mainonly advanced" data-action-type="toggle-remote-display" title="Toggle the remote guest's display output" onclick="remoteDisplayMute(this, event);">
                         <i class="las la-eye-slash"></i> <span data-translate="toggle-remote-display">Blind</span>
                     </button>
+					
+					<button data-action-type="refresh-mic" class="advanced" title="Attempt so fix microphone issues by reconnecting it.'" onclick="directRefreshMicrophone(this);">
+						<i class="las la-sync"></i>
+						<span data-translate="refresh-microphone">reconnect mic</span>
+					</button>
+					
 					<button data-action-type="addToScene" class="advanced" title="Add this Video to any remote '&scene=1'" data-scene="1" onclick="directEnable(this, event);">
 						<i class="las la-plus-square"></i>
 						<span data-translate="add-to-scene">add to scene 1</span>
@@ -2274,7 +2290,7 @@
 				<li class="context-menu__item">
 					<a href="#" class="context-menu__link" data-action="Mirror">
 						<i class="las la-external-link"></i>
-						<span data-translate="mirror-video">Mirror</span>
+						<span data-translate="mirror-video">Mirror Video</span>
 					</a>
 				</li>
 				<li class="context-menu__item">
@@ -2574,25 +2590,26 @@
 		
 		<div id="remoteOBSControl" class="customModelPopup" style="display:none;">
 			<div class="promptModalInner">
-				<span class='modalClose' onclick="toggleOBSControls();">×</span>
-				<span></span>
-				<h3 data-translate="remote-control-obs-menu">Remote Controller for OBS Studio</h3><br />
-				<div id="obsControlHelp" class="hidden" style="margin: 10px 0;display:block" >
-					No remote controllable instances of OBS Studio were found
-				</div>
-				<div id="obsControlButtons" style="margin: 10px 0;display:block" >
-				</div>
-				<div id="obsSceneNames" style="margin: 10px 0;display:block" >
-				</div>
-				<div id="obsRemotePassword" class="hidden" style="margin: 10px 0;display:block;" >
-					<span style="font-size:117%"><i class="las la-key" style="margin: 10px;"></i>Remote OBS passcode:</span>
-					<input style="margin:0 10px;display:inline-block;padding: 8px 10px 6px 10px;" placeholder="Enter the remote OBS password here" />
-				</div>
-				<small style="margin: 20px 0 0 0;display:block;" >
-					See the <a href="https://docs.vdo.ninja/advanced-settings/upcoming-parameters/and-obs" style="cursor:pointer;" target="_blank">documentation</a> for help on using the remote OBS controller
-				</small>
-				<div id="debugRemoteOBSControl" class="hidden">
-				</div>
+				<span class='modalClose' style="right:33px;" onclick="toggleOBSControlsLock(this);">🔓</span><span class='modalClose' onclick="toggleOBSControls();">×</span>
+				<span id="remoteOBSControlContents">
+					<h3 data-translate="remote-control-obs-menu">Remote Controller for OBS Studio</h3><br />
+					<div id="obsControlHelp" class="hidden" style="margin: 10px 0;display:block" >
+						No remote controllable instances of OBS Studio were found
+					</div>
+					<div id="obsControlButtons" style="margin: 10px 0;display:block" >
+					</div>
+					<div id="obsSceneNames" style="margin: 10px 0;display:block" >
+					</div>
+					<div id="obsRemotePassword" class="hidden" style="margin: 10px 0;display:block;" >
+						<span style="font-size:117%"><i class="las la-key" style="margin: 10px;"></i>Remote OBS passcode:</span>
+						<input style="margin:0 10px;display:inline-block;padding: 8px 10px 6px 10px;" placeholder="Enter the remote OBS password here" />
+					</div>
+					<small style="margin: 20px 0 0 0;display:block;" >
+						See the <a href="https://docs.vdo.ninja/advanced-settings/upcoming-parameters/and-obs" style="cursor:pointer;" target="_blank">documentation</a> for help on using the remote OBS controller
+					</small>
+					<div id="debugRemoteOBSControl" class="hidden">
+					</div>
+				</span>
 			</div>
 		</div>
 		
@@ -2806,7 +2823,7 @@
 			// if (!window.location.search){document.body.innerHTML = "";} // uncomment this line, if you wish to try it.
 			
 			var session = WebRTC.Media; // session is a required global variable if configuring manually. Run before loading main.js but after webrtc.js.
-			session.version = "26.1";
+			session.version = "26.3";
 			session.streamID = session.generateStreamID(); // randomly generates a streamID for this session. You can set your own programmatically if needed
 			
 			session.defaultPassword = "someEncryptionKey123"; // Change this password if self-deploying for added security/privacy
@@ -2929,7 +2946,7 @@
 			// if ("42" != prompt("enter the password")){document.body.innerHTML = "";window.location.href = "";} // if you want a low-effort password for the site
 			
 		</script>
-		<script type="text/javascript" crossorigin="anonymous" id="lib-js" src="./lib.js?ver=1265"></script>
-		<script type="text/javascript" crossorigin="anonymous" id="main-js" src="./main.js?ver=941"></script>
+		<script type="text/javascript" crossorigin="anonymous" id="lib-js" src="./lib.js?ver=1290"></script>
+		<script type="text/javascript" crossorigin="anonymous" id="main-js" src="./main.js?ver=949"></script>
 	</body>
 </html>
